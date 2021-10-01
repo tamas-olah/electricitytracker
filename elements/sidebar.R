@@ -35,6 +35,13 @@ dashSidebar <- argonDashSidebar(
     
     argonSidebarItem( tabName = "About",
                       icon    = icon( name = "address-card" ),
-                      "About" )
+                      "About" ),
+    
+    argonSidebarItem( tabName = "Selector",
+                      # tags$style( type='text/css', ".selectize-input { font-size: 12px; line-height: 22px;} .selectize-dropdown { font-size: 12px; line-height: 28px; }" ),
+                      selectInput( inputId = "dropdown",
+                                   label   = h5("COUNTRY"),
+                                   choices = c( "Germany" = "Germany",
+                                                "France"  = "France" ) ) )
     )
   )
