@@ -87,7 +87,7 @@ demand_page <- argonTabItem(
                 #   timeFormat = "%b %Y"
                 # ),
                 
-                echarts4rOutput("demandRT")
+                echarts4rOutput( "demandRT" )
                 )
               )
             )
@@ -102,7 +102,7 @@ demand_page <- argonTabItem(
             
             argonColumn(
               
-              width = 9L,
+              width = 12L,
               
               argonCard(
                 
@@ -111,35 +111,35 @@ demand_page <- argonTabItem(
                 icon  = argonIcon("sound-wave"),
                 plotlyOutput( "demandOverlay", height = "470px" )
                 )
-              ),
-            
-            argonColumn(
-              
-              width = 3L,
-              
-              argonCard(
-                
-                title            = "Inputs",
-                width            = 12L,
-                icon             = icon("cogs"),
-                status           = "default",
-                background_color = "secondary",
-                selectInput( inputId = "dropdown", 
-                             label   = h5( "COUNTRY", align = "center" ), 
-                             choices = c( "Germany" = "Germany",
-                                          "France"  = "France" ) ),
-                sliderInput( inputId    = "Id096",
-                             label      = h5("DATES"),
-                             min        = as.Date( "2017-01-01" ),
-                             max        = as.Date( "2021-09-28" ),
-                             value      = as.Date( c("2020-01-01", "2021-09-28") ),
-                             step       = 1L,
-                             width      = "100%",
-                             timeFormat = "%b %Y"
-                  ),
-                "🚧 Under construction 🚧"
-                )
               )
+            
+            # argonColumn(
+            #   
+            #   width = 3L,
+            #   
+            #   argonCard(
+            #     
+            #     title            = "Inputs",
+            #     width            = 12L,
+            #     icon             = icon("cogs"),
+            #     status           = "default",
+            #     background_color = "secondary",
+            #     selectInput( inputId = "dropdown", 
+            #                  label   = h5( "COUNTRY", align = "center" ), 
+            #                  choices = c( "Germany" = "Germany",
+            #                               "France"  = "France" ) ),
+            #     sliderInput( inputId    = "Id096",
+            #                  label      = h5("DATES"),
+            #                  min        = as.Date( "2017-01-01" ),
+            #                  max        = as.Date( "2021-09-28" ),
+            #                  value      = as.Date( c("2020-01-01", "2021-09-28") ),
+            #                  step       = 1L,
+            #                  width      = "100%",
+            #                  timeFormat = "%b %Y"
+            #       ),
+            #     "🚧 Under construction 🚧"
+            #     )
+            #   )
             )
           ),
         

@@ -31,13 +31,15 @@ downloadLoadRT   <- function( eic_code, period_start, period_end ) {
   loadRT[ i = ,
           j = DateTime := floor_date( DateTime, unit = "hours" ) ]
   
-  loadRT[ i = ,
-          j = LoadType := "TotalLoad" ]
+  # loadRT[ i = ,
+  #         j = LoadType := "TotalLoad" ]
   
   loadRT <- loadRT[ i       = ,
                     j       = lapply( X   = .SD,
                                       FUN = mean ),
-                    by      = c( "DateTime", "BiddingZone", "Date", "Year", "Month", "Hour", "LoadType" ),
+                    by      = c( "DateTime", "BiddingZone", "Date", "Year", "Month", "Hour"
+                                 # , "LoadType" 
+                                 ),
                     .SDcols = "LoadValue" ]
   
   loadRT$LoadValue <- round( loadRT$LoadValue, digits = 0L )

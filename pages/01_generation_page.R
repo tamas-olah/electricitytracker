@@ -85,7 +85,7 @@ generation_page <- argonTabItem(
           
           argonRow(
             
-            # echarts4rOutput( "generationRT", height = "580px" )
+            echarts4rOutput( "generationRT", height = "580px" )
             )
           ),
         

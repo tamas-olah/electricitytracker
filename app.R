@@ -15,71 +15,67 @@ library( echarts4r    )
 
 source( "helper.R" )
 
-# countries  <- list( "10Y1001A1001A83F"   # Germany
-#                     # "10YFR-RTE------C"   # France
-#                     )  
-# 
+countries  <- list( "10Y1001A1001A83F"   # Germany
+                    # "10YFR-RTE------C"   # France
+                    )
+
 # genRT      <- lapply( X            = countries,
 #                       FUN          = downloadGenRT,
-#                       period_start = ymd( today(), tz = "CET" ) - days( 5L ),
+#                       period_start = ymd( today(), tz = "CET" ) - days( 200L ),
 #                       period_end   = ymd( today(), tz = "CET" ) + days( 1L ) )
 # 
 # genDA      <- lapply( X            = countries,
 #                       FUN          = downloadGenDA,
 #                       period_start = ymd( today(), tz = "CET" ),
-#                       period_end   = ymd( today(), tz = "CET" ) + days( 2L ) )
+#                       period_end   = ymd( today(), tz = "CET" ) + days( 20L ) )
 # 
 # genDAWS    <- lapply( X            = countries,
 #                       FUN          = downloadGenDAWS,
 #                       period_start = ymd( today(), tz = "CET" ),
-#                       period_end   = ymd( today(), tz = "CET" ) + days( 2L ) )
+#                       period_end   = ymd( today(), tz = "CET" ) + days( 20L ) )
 # 
 # loadRT     <- lapply( X            = countries,
 #                       FUN          = downloadLoadRT,
-#                       period_start = ymd( today(), tz = "CET" ) - days( 360L ),
-#                       period_end   = ymd( today(), tz = "CET" ) + days( 1L ) )
+#                       period_start = ymd( today(), tz = "CET" ) - days( 200L ),
+#                       period_end   = ymd( today(), tz = "CET" ) + days( 20L ) )
 # 
 # loadDA     <- lapply( X            = countries,
 #                       FUN          = downloadLoadDA,
 #                       period_start = ymd( today(), tz = "CET" ),
-#                       period_end   = ymd( today(), tz = "CET" ) + days( 3L ) )
+#                       period_end   = ymd( today(), tz = "CET" ) + days( 20L ) )
 # 
 # loadWA     <- lapply( X            = countries,
 #                       FUN          = downloadLoadWA,
 #                       period_start = ymd( today(), tz = "CET" ),
 #                       period_end   = ymd( today(), tz = "CET" ) + days( 20L ) )
 # 
-# 
 # Germany    <- merge( x   = genRT[[ 1 ]],
 #                      y   = loadRT[[ 1 ]],
 #                      by  = c( "DateTime", "BiddingZone", "Date", "Year", "Month", "Hour" ),
 #                      all = TRUE )
 # 
+# renewGen   <- Germany[ i  = AggregateType %in% list( "Solar" ,"Wind", "Other renewables" ),
+#                        j  = .( RenewableGen = sum( GenerationValue ) ),
+#                        by = c( "DateTime" ) ]
+# 
+# Germany    <- merge( x   = Germany,
+#                      y   = renewGen,
+#                      by  = "DateTime",
+#                      all = TRUE )
+# 
+# Germany[ i  = ,
+#          j  = ResidualLoad := LoadValue - RenewableGen ]
+# 
 # write_fst( Germany, "data/Germany0929.fst" )
 Germany    <- read_fst("data/Germany0929.fst", as.data.table = TRUE )
 
-Germany[ i  = AggregateType %in% list( "Solar" ,"Wind", "Other renewables" ),
-         j  = RenewGen := sum( GenerationValue ),
-         by = DateTime ]
+# resLoad[ i = ,
+#          j = LoadType := "ResidualLoad" ]
 
-resLoad    <- Germany[ i  = ,
-                       j  = .( LoadValue = LoadValue - RenewGen ),
-                       by = DateTime ]
-
-resLoad    <- na.omit(resLoad)
-
-resLoad    <- resLoad[ i       = ,
-                       j       = lapply( X = .SD, FUN = mean ),
-                       by      = "DateTime",
-                       .SDcols = "LoadValue" ]
-
-resLoad[ i = ,
-         j = LoadType := "ResidualLoad" ]
-
-Germany    <- merge( x   = Germany,
-                     y   = resLoad,
-                     by  = c( "DateTime", "LoadValue", "LoadType" ),
-                     all = TRUE )
+# Germany    <- merge( x   = Germany,
+#                      y   = resLoad,
+#                      by  = c( "DateTime", "LoadValue", "LoadType" ),
+#                      all = TRUE )
 
 
 # genDAGer   <- genDA[[ 1 ]]
@@ -169,10 +165,21 @@ shiny::shinyApp(
     #     layout( font = font ) } )
     
     output$generationRT <- renderEcharts4r( {
-      Germany %>% 
-        group_by( GenerationType ) %>% 
+      unique( Germany[ i = DateTime > ymd( today() ) - days ( 4L ),
+                       j = .( DateTime, GenerationValue, GenerationType ) ] ) %>%
+        group_by( GenerationType ) %>%
         e_charts( x = DateTime ) %>%
-        e_area( serie = GenerationValue ) } )
+        e_area(# name   = "Generation by Type",
+                # type   = "line",
+                smooth = TRUE,
+                symbol = "none",
+                serie  = GenerationValue,
+                stack  = "Total" ) %>% 
+        e_datazoom( type  = "slider" ) %>% 
+        e_legend( orient = "vertical",
+                  right = 0,
+                  top = "center")
+        } )
     
     output$GenDAGerPlot <- renderEcharts4r( {
       genDAGer %>% 
@@ -236,12 +243,13 @@ shiny::shinyApp(
     #                            x           = 0.25, 
     #                            y           = -0.2 ) ) } )
     
+    
     output$demandRT <- renderEcharts4r( {
-      Germany %>% 
-        group_by( Date ) %>% 
-        group_by( LoadType ) %>% 
+      unique( Germany[ i = DateTime > ymd( today() ) - days ( 30 ),
+                       j = .( DateTime, LoadValue, ResidualLoad ) ] ) %>%
         e_charts( x = DateTime ) %>% 
         e_line( serie = LoadValue, smooth = TRUE ) %>% 
+        e_line( serie = ResidualLoad, smooth = TRUE ) %>% 
         e_tooltip( trigger = "axis" ) %>% 
         e_datazoom( x_index = c( 0L, 1L ) ) } )
     
