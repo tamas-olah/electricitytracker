@@ -24,45 +24,45 @@ demand_page <- argonTabItem(
           tabName = "Real-time",
           active  = TRUE,
           
-          argonCard(
-            
-            title  = "Inputs",
-            width  = 12L,
-            icon   = icon( "cogs" ),
-            status = "default",
-            
-            argonRow(
-            
-              argonColumn(
-                
-                width = 2L,
-                tags$style( type='text/css', ".selectize-input { font-size: 12px; line-height: 22px;} .selectize-dropdown { font-size: 12px; line-height: 28px; }" ),
-                selectInput( inputId = "dropdown",
-                             label   = h5("COUNTRY"),
-                             choices = c( "Germany" = "Germany",
-                                          "France"  = "France" ) )
-                ),
-              
-              argonColumn( width = 1L ),
-              
-              argonColumn(
-                
-                width = 9L,
-                
-                sliderInput(
-                  
-                  inputId    = "Id096",
-                  label      = h5("DATES"),
-                  min        = as.Date( "2017-01-01" ),
-                  max        = as.Date( "2021-09-28" ),
-                  value      = as.Date( c("2020-01-01", "2021-09-28") ),
-                  step       = 1L,
-                  width      = "100%",
-                  timeFormat = "%b %Y"
-                  )
-                )
-              )
-            ),
+          # argonCard(
+          #   
+          #   title  = "Inputs",
+          #   width  = 12L,
+          #   icon   = icon( "cogs" ),
+          #   status = "default",
+          #   
+          #   argonRow(
+          #   
+          #     argonColumn(
+          #       
+          #       width = 2L,
+          #       tags$style( type='text/css', ".selectize-input { font-size: 12px; line-height: 22px;} .selectize-dropdown { font-size: 12px; line-height: 28px; }" ),
+          #       selectInput( inputId = "dropdown",
+          #                    label   = h5("COUNTRY"),
+          #                    choices = c( "Germany" = "Germany",
+          #                                 "France"  = "France" ) )
+          #       ),
+          #     
+          #     argonColumn( width = 1L ),
+          #     
+          #     argonColumn(
+          #       
+          #       width = 9L,
+          #       
+          #       sliderInput(
+          #         
+          #         inputId    = "Id096",
+          #         label      = h5("DATES"),
+          #         min        = as.Date( "2017-01-01" ),
+          #         max        = as.Date( "2021-09-28" ),
+          #         value      = as.Date( c("2020-01-01", "2021-09-28") ),
+          #         step       = 1L,
+          #         width      = "100%",
+          #         timeFormat = "%b %Y"
+          #         )
+          #       )
+          #     )
+          #   ),
           
           argonRow(
             
@@ -72,10 +72,22 @@ demand_page <- argonTabItem(
               
               argonCard(
                 
-                title = "real-time demand",
+                title = NULL, #"real-time demand",
                 width = 12L,
-                icon  = argonIcon( "pin-3" ),
-                plotlyOutput("demandRT", height = "450px" )
+                icon  = NULL, #argonIcon( "pin-3" ),
+                # sliderInput(
+                #   
+                #   inputId    = "loadRTSelector",
+                #   label      = NULL,
+                #   min        = as.Date( "2017-01-01" ),
+                #   max        = as.Date( "2021-09-28" ),
+                #   value      = as.Date( c("2020-01-01", "2021-09-28") ),
+                #   step       = 1L,
+                #   width      = "100%",
+                #   timeFormat = "%b %Y"
+                # ),
+                
+                echarts4rOutput("demandRT")
                 )
               )
             )
@@ -140,63 +152,63 @@ demand_page <- argonTabItem(
             
             argonColumn(
               
-              width  = 9L,
+              width  = 12L,
               height = "200px",
               
               argonRow(
                 
                 argonCard(
                   
-                  title        = "Day-Ahead Demand Forecast",
+                  title        = NULL, #"Day-Ahead Demand Forecast",
                   width        = 12L,
-                  icon         = argonIcon("curved-next"),
+                  icon         = NULL, #argonIcon("curved-next"),
                   shadow       = FALSE,
-                  border_level = 4L,
-                  plotlyOutput( "demandDAForecast", height = "250px" )
+                  border_level = 8L,
+                  echarts4rOutput( "demandDAForecast", height = "300px" )
                   )
                 )
-              ),
-            
-            argonColumn(
-              
-              width = 3L,
-              
-              argonCard(
-                
-                title            = "Inputs",
-                width            = 12L,
-                icon             = icon( "cogs" ),
-                status           = "default",
-                background_color = "secondary",
-                selectInput( inputId = "dropdown", 
-                             label   = h5( "COUNTRY", align = "center" ), 
-                             choices = c( "Germany" = "Germany",
-                                          "France"  = "France" ) ),
-                sliderInput(
-                  inputId    = "Id096",
-                  label      = h5("DATES"),
-                  min        = as.Date( "2017-01-01" ),
-                  max        = as.Date( "2021-09-28" ),
-                  value      = as.Date( c("2020-01-01", "2021-09-28") ),
-                  step       = 1L,
-                  width      = "100%",
-                  timeFormat = "%b %Y"
-                  ),
-                "🚧 Under construction 🚧"
-                )
               )
+            
+            # argonColumn(
+            #   
+            #   width = 3L,
+            #   
+            #   argonCard(
+            #     
+            #     title            = "Inputs",
+            #     width            = 12L,
+            #     icon             = icon( "cogs" ),
+            #     status           = "default",
+            #     background_color = "secondary",
+            #     selectInput( inputId = "dropdown", 
+            #                  label   = h5( "COUNTRY", align = "center" ), 
+            #                  choices = c( "Germany" = "Germany",
+            #                               "France"  = "France" ) ),
+            #     sliderInput(
+            #       inputId    = "Id096",
+            #       label      = h5("DATES"),
+            #       min        = as.Date( "2017-01-01" ),
+            #       max        = as.Date( "2021-09-28" ),
+            #       value      = as.Date( c("2020-01-01", "2021-09-28") ),
+            #       step       = 1L,
+            #       width      = "100%",
+            #       timeFormat = "%b %Y"
+            #       ),
+            #     "🚧 Under construction 🚧"
+            #     )
+            #   )
             ),
           
           argonRow(
             
             argonCard(
               
-              title = "Week-ahead Demand forecast",
+              title = NULL, #"Week-ahead Demand forecast",
               width = 12L,
-              icon = argonIcon("curved-next"),
+              icon = NULL, #argonIcon("curved-next"),
               shadow = FALSE,
-              border_level = 0L,
-              plotlyOutput( "demandWAForecast", height = "250px" )
+              border_level = 8L,
+              echarts4rOutput( "demandWAForecast", height = "300px" )
               )
             )
           )

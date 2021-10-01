@@ -11,82 +11,95 @@ library( gfonts       )
 library( scales       )
 library( DT           )
 library( entsoeapi    )
+library( echarts4r    )
 
 source( "helper.R" )
 
-countries <- list( "10Y1001A1001A83F"   # Germany
-                   # "10YFR-RTE------C"
-                   )  # France
-
-# genRT   <- lapply( X            = countries,
-#                    FUN          = downloadGenRT,
-#                    period_start = as.POSIXct( Sys.Date() - 5 ),
-#                    period_end   = as.POSIXct( Sys.Date() + 1 ) )
+# countries  <- list( "10Y1001A1001A83F"   # Germany
+#                     # "10YFR-RTE------C"   # France
+#                     )  
 # 
-# loadRT  <- lapply( X            = countries,
-#                    FUN          = downloadLoadRT,
-#                    period_start = as.POSIXct( today( tzone = "CET" ) - 360 ),
-#                    period_end   = as.POSIXct( today( tzone = "CET" ) + 1 ) )
+# genRT      <- lapply( X            = countries,
+#                       FUN          = downloadGenRT,
+#                       period_start = ymd( today(), tz = "CET" ) - days( 5L ),
+#                       period_end   = ymd( today(), tz = "CET" ) + days( 1L ) )
 # 
-# Germany   <- merge( x   = genRT[[ 1 ]],
-#                     y   = loadRT[[ 1 ]],
-#                     by  = c( "DateTime", "BiddingZone", "Date", "Year", "Month", "Hour" ),
-#                     all = TRUE )
-
-# write_fst(Germany, "data/Germany0928.fst")
-Germany <- read_fst("data/Germany0928.fst", as.data.table = TRUE )
+# genDA      <- lapply( X            = countries,
+#                       FUN          = downloadGenDA,
+#                       period_start = ymd( today(), tz = "CET" ),
+#                       period_end   = ymd( today(), tz = "CET" ) + days( 2L ) )
+# 
+# genDAWS    <- lapply( X            = countries,
+#                       FUN          = downloadGenDAWS,
+#                       period_start = ymd( today(), tz = "CET" ),
+#                       period_end   = ymd( today(), tz = "CET" ) + days( 2L ) )
+# 
+# loadRT     <- lapply( X            = countries,
+#                       FUN          = downloadLoadRT,
+#                       period_start = ymd( today(), tz = "CET" ) - days( 360L ),
+#                       period_end   = ymd( today(), tz = "CET" ) + days( 1L ) )
+# 
+# loadDA     <- lapply( X            = countries,
+#                       FUN          = downloadLoadDA,
+#                       period_start = ymd( today(), tz = "CET" ),
+#                       period_end   = ymd( today(), tz = "CET" ) + days( 3L ) )
+# 
+# loadWA     <- lapply( X            = countries,
+#                       FUN          = downloadLoadWA,
+#                       period_start = ymd( today(), tz = "CET" ),
+#                       period_end   = ymd( today(), tz = "CET" ) + days( 20L ) )
+# 
+# 
+# Germany    <- merge( x   = genRT[[ 1 ]],
+#                      y   = loadRT[[ 1 ]],
+#                      by  = c( "DateTime", "BiddingZone", "Date", "Year", "Month", "Hour" ),
+#                      all = TRUE )
+# 
+# write_fst( Germany, "data/Germany0929.fst" )
+Germany    <- read_fst("data/Germany0929.fst", as.data.table = TRUE )
 
 Germany[ i  = AggregateType %in% list( "Solar" ,"Wind", "Other renewables" ),
          j  = RenewGen := sum( GenerationValue ),
          by = DateTime ]
 
-resLoad <- Germany[ i  = ,
-                    j  = .( LoadValue = LoadValue - RenewGen ),
-                    by = DateTime ]
+resLoad    <- Germany[ i  = ,
+                       j  = .( LoadValue = LoadValue - RenewGen ),
+                       by = DateTime ]
 
-resLoad <- na.omit(resLoad)
+resLoad    <- na.omit(resLoad)
 
-resLoad <- resLoad[ i       = ,
-                    j       = lapply( X = .SD, FUN = mean ),
-                    by      = "DateTime",
-                    .SDcols = "LoadValue" ]
+resLoad    <- resLoad[ i       = ,
+                       j       = lapply( X = .SD, FUN = mean ),
+                       by      = "DateTime",
+                       .SDcols = "LoadValue" ]
 
 resLoad[ i = ,
          j = LoadType := "ResidualLoad" ]
 
-Germany <- merge( x   = Germany,
-                  y   = resLoad,
-                  by  = c( "DateTime", "LoadValue", "LoadType" ),
-                  all = TRUE )
+Germany    <- merge( x   = Germany,
+                     y   = resLoad,
+                     by  = c( "DateTime", "LoadValue", "LoadType" ),
+                     all = TRUE )
 
 
-# France    <- merge( x   = genRT[[ 2 ]],
-#                     y   = loadRT[[ 2 ]],
-#                     by  = c( "DateTime", "Date", "Year", "Month", "Hour" ),
-#                     all = TRUE )
+# genDAGer   <- genDA[[ 1 ]]
+# write_fst( genDAGer, "data/genDAGer.fst" )
+genDAGer   <- read_fst("data/genDAGer.fst", as.data.table = TRUE )
 
-# loadDAhead <- lapply( X            = countries,
-#                       FUN          = downloadLoadDA,
-#                       period_start = as.POSIXct( today( tzone = "CET" ) ),
-#                       period_end   = as.POSIXct( today( tzone = "CET" ) + 3 ) )
-# 
-# loadDAGer <- loadDAhead[[ 1 ]]
-# loadDAFra <- loadDAhead[[ 2 ]]
-# write_fst(loadDAGer, "data/loadDAGer.fst")
-loadDAGer <- read_fst("data/loadDAGer.fst", as.data.table = TRUE )
+# genDAWSGer <- genDAWS[[ 1 ]]
+# write_fst( genDAWSGer, "data/genDAWSGer.fst" )
+genDAWSGer <- read_fst("data/genDAWSGer.fst", as.data.table = TRUE )
+
+# loadDAGer  <- loadDA[[ 1 ]]
+# write_fst( loadDAGer, "data/loadDAGer.fst" )
+loadDAGer  <- read_fst("data/loadDAGer.fst", as.data.table = TRUE )
+
+# loadWAGer  <- loadWA[[ 1 ]]
+# write_fst( loadWAGer, "data/loadWAGer.fst" )
+loadWAGer  <- read_fst("data/loadWAGer.fst", as.data.table = TRUE )
 
 
-# loadWA <- lapply( X            = countries,
-#                   FUN          = downloadLoadWA,
-#                   period_start = as.POSIXct( today( tzone = "CET" ) ),
-#                   period_end   = as.POSIXct( today( tzone = "CET" ) + 20 ) )
-# 
-# loadWAGer <- loadWA[[ 1 ]]
-# loadWAFra <- loadWA[[ 2 ]]
-# write_fst(loadWAGer, "data/loadWAGer.fst")
-loadWAGer <- read_fst("data/loadWAGer.fst", as.data.table = TRUE )
-
-rm( Packages, InstPackages, UninstPackages, countries, loadRT, genRT, loadDAhead, loadWA )
+rm( Packages, InstPackages, UninstPackages, countries, loadRT, loadDA, loadWA, genRT, genDA, genDAWS, resLoad )
 invisible( gc() )
 
 updateDate <- format ( file.info( "app.R" )$mtime, "%b %d, %I:%M%P %Z" )
@@ -96,13 +109,16 @@ lapply( X   = list.files( path = "elements", full.names = TRUE ),
 
 lapply( X   = list.files( path = "pages", full.names = TRUE ),
         FUN = source )
-
+e_common(
+  font_family = "Barlow",
+  theme = "macarons"
+)
 
 shiny::shinyApp(
   
   ui = argonDashPage(
-    
-    chooseSliderSkin( skin = "Flat", color = "#6663e7" ),
+    # chooseSliderSkin( skin = "Flat", color = "#6663e7" ),
+    use_font("barlow", "www/css/barlow.css", css = "font-family: 'Barlow', sans-serif;"),
     title       = "Electricity tracker",
     author      = "Tamas",
     description = NULL,
@@ -137,20 +153,45 @@ shiny::shinyApp(
     #   }
     # } )
     
-    output$generationRT <- renderPlotly( {
-      ggplotly( ggplot() +
-                  geom_area( data    = Germany,
-                             mapping = aes( x    = DateTime, 
-                                            y    = GenerationValue,
-                                            fill = GenerationType ) ,
-                             alpha = 0.9 ) +
-                  theme_map() +
-                  theme( legend.title = element_blank() ) +
-                  scale_y_continuous( labels = label_number( suffix = "K", scale = 1e-3 ) ) +
-                  scale_x_datetime( breaks = "1 days", date_labels = "%b %d %H:%M" ) ) %>%
-        config( displayModeBar = FALSE ) %>%
-        style( hoverlabel = label ) %>%
-        layout( font = font ) } )
+    # output$generationRT <- renderPlotly( {
+    #   ggplotly( ggplot() +
+    #               geom_area( data    = Germany,
+    #                          mapping = aes( x    = DateTime, 
+    #                                         y    = GenerationValue,
+    #                                         fill = GenerationType ) ,
+    #                          alpha = 0.9 ) +
+    #               theme_map() +
+    #               theme( legend.title = element_blank() ) +
+    #               scale_y_continuous( labels = label_number( suffix = "K", scale = 1e-3 ) ) +
+    #               scale_x_datetime( breaks = "1 days", date_labels = "%b %d %H:%M" ) ) %>%
+    #     config( displayModeBar = FALSE ) %>%
+    #     style( hoverlabel = label ) %>%
+    #     layout( font = font ) } )
+    
+    output$generationRT <- renderEcharts4r( {
+      Germany %>% 
+        group_by( GenerationType ) %>% 
+        e_charts( x = DateTime ) %>%
+        e_area( serie = GenerationValue ) } )
+    
+    output$GenDAGerPlot <- renderEcharts4r( {
+      genDAGer %>% 
+        e_charts( x = DateTime ) %>% 
+        e_line( serie = GenerationValue, smooth = TRUE ) %>% 
+        e_tooltip( trigger = "axis" ) %>% 
+        e_legend( show = FALSE ) %>% 
+        e_title( text    = "Day-ahead forecast", 
+                 subtext = "Total generation, MWh" )} )
+    
+    output$GenDAWSGerPlot <- renderEcharts4r( {
+      genDAWSGer %>% 
+        group_by( GenerationType ) %>% 
+        e_charts( x = DateTime ) %>% 
+        e_line( serie = GenerationValue, smooth = TRUE ) %>% 
+        e_tooltip( trigger = "axis" ) %>% 
+        e_legend( right = 0L ) %>% 
+        e_title( text    = "Day-ahead forecast", 
+                 subtext = "Wind and solar generation, MWh" ) } )
     
     output$demandOverlay <- renderPlotly( {
       ggplotly( ggplot() +
@@ -173,61 +214,91 @@ shiny::shinyApp(
         style( hoverlabel = label ) %>%
         layout( font = font ) } )
     
-    output$demandRT <- renderPlotly( {
-      ggplotly( ggplot( data = Germany[ DateTime > today( tzone = "CET" ) - 5L ] ) +
-                  geom_line( mapping = aes( x     = DateTime,
-                                            y     = LoadValue,
-                                            color = LoadType),
-                             na.rm = TRUE)  +
-                  scale_y_continuous( labels = label_number( suffix = "K", scale = 1e-3 ),
-                                      limits = c( 0L, 95000L ) ) +
-                  scale_x_datetime( breaks      = "1 days", 
-                                    date_labels = "%b %d %H:%M" ) +
-                  scale_color_discrete( type         = c( "#ff004f", "#6663e7" ),
-                                        na.translate = TRUE ) +
-                  theme_map() +
-                  theme( legend.title    = element_blank(),
-                         legend.position = "bottom" ) ) %>%
-        config( displayModeBar = FALSE ) %>%
-        style( hoverlabel = label ) %>%
-        layout( font   = font,
-                legend = list( orientation = "h",
-                               x           = 0.25, 
-                               y           = -0.2 ) ) } )
+    # output$demandRT <- renderPlotly( {
+    #   ggplotly( ggplot( data = Germany[ DateTime > today( tzone = "CET" ) - 5L ] ) +
+    #               geom_line( mapping = aes( x     = DateTime,
+    #                                         y     = LoadValue,
+    #                                         color = LoadType),
+    #                          na.rm = TRUE)  +
+    #               scale_y_continuous( labels = label_number( suffix = "K", scale = 1e-3 ),
+    #                                   limits = c( 0L, 95000L ) ) +
+    #               scale_x_datetime( breaks      = "1 days", 
+    #                                 date_labels = "%b %d %H:%M" ) +
+    #               scale_color_discrete( type         = c( "#ff004f", "#6663e7" ),
+    #                                     na.translate = TRUE ) +
+    #               theme_map() +
+    #               theme( legend.title    = element_blank(),
+    #                      legend.position = "bottom" ) ) %>%
+    #     config( displayModeBar = FALSE ) %>%
+    #     style( hoverlabel = label ) %>%
+    #     layout( font   = font,
+    #             legend = list( orientation = "h",
+    #                            x           = 0.25, 
+    #                            y           = -0.2 ) ) } )
     
-    output$demandDAForecast <- renderPlotly( {
-      ggplotly( ggplot( data = loadDAGer ) +
-                  geom_line( mapping = aes( x = DateTime, 
-                                            y = LoadForecastDA ),
-                             color   = "#6663e7" ) +
-                  scale_y_continuous( labels = label_number( suffix = "K", scale = 1e-3 ),
-                                      limits = c( 20000L, 80000L ) ) +
-                  scale_x_datetime( breaks = "4 hours", date_labels = "%b %d %H:%M" ) +
-                  theme_map() +
-                  theme( legend.title = element_blank() ) ) %>%
-        config( displayModeBar = FALSE ) %>%
-        style( hoverlabel = label ) %>%
-        layout( font = font ) } )
+    output$demandRT <- renderEcharts4r( {
+      Germany %>% 
+        group_by( Date ) %>% 
+        group_by( LoadType ) %>% 
+        e_charts( x = DateTime ) %>% 
+        e_line( serie = LoadValue, smooth = TRUE ) %>% 
+        e_tooltip( trigger = "axis" ) %>% 
+        e_datazoom( x_index = c( 0L, 1L ) ) } )
     
-    output$demandWAForecast <- renderPlotly( {
-      ggplotly( ggplot( data    = loadWAGer,
-                        mapping = aes( x = DateTime ) ) +
-                  geom_ribbon( mapping = aes( ymin = Min, 
-                                              ymax = Max ),
-                               fill    = "#6663e7",
-                               alpha   = 0.2 ) +
-                  geom_line( mapping = aes( y = Min ),
-                             color   = "#6663e7" ) +
-                  geom_line( mapping = aes( y = Max ),
-                             color   = "#6663e7" ) +
-                  scale_y_continuous( labels = label_number( suffix = "K", scale = 1e-3 ),
-                                      limits = c( 20000L, 80000L ) ) +
-                  scale_x_datetime( breaks = "1 days", date_labels = "%b %d") +
-                  theme_map() +
-                  theme( legend.title = element_blank() ) ) %>% 
-        config( displayModeBar = FALSE ) %>%
-        style( hoverlabel = label ) %>%
-        layout( font = font ) } )
+    # output$demandDAForecast <- renderPlotly( {
+    #   ggplotly( ggplot( data = loadDAGer ) +
+    #               geom_line( mapping = aes( x = DateTime, 
+    #                                         y = LoadForecastDA ),
+    #                          color   = "#6663e7" ) +
+    #               scale_y_continuous( labels = label_number( suffix = "K", scale = 1e-3 ),
+    #                                   limits = c( 20000L, 80000L ) ) +
+    #               scale_x_datetime( breaks = "4 hours", date_labels = "%b %d %H:%M" ) +
+    #               theme_map() +
+    #               theme( legend.title = element_blank() ) ) %>%
+    #     config( displayModeBar = FALSE ) %>%
+    #     style( hoverlabel = label ) %>%
+    #     layout( font = font ) } )
+    
+    output$demandDAForecast <- renderEcharts4r( {
+      loadDAGer %>%
+        e_charts( x = DateTime ) %>% 
+        e_line( serie = LoadForecastDA, smooth = TRUE ) %>% 
+        e_tooltip( trigger = "axis" ) %>% 
+        e_legend( show = FALSE ) %>% 
+        e_title( text    = "Day-ahead forecast", 
+                 subtext = "Total demand, MWh" ) } )
+    
+    # output$demandWAForecast <- renderPlotly( {
+    #   ggplotly( ggplot( data    = loadWAGer,
+    #                     mapping = aes( x = DateTime ) ) +
+    #               geom_ribbon( mapping = aes( ymin = Min, 
+    #                                           ymax = Max ),
+    #                            fill    = "#6663e7",
+    #                            alpha   = 0.2 ) +
+    #               geom_line( mapping = aes( y = Min ),
+    #                          color   = "#6663e7" ) +
+    #               geom_line( mapping = aes( y = Max ),
+    #                          color   = "#6663e7" ) +
+    #               scale_y_continuous( labels = label_number( suffix = "K", scale = 1e-3 ),
+    #                                   limits = c( 20000L, 80000L ) ) +
+    #               scale_x_datetime( breaks = "1 days", date_labels = "%b %d") +
+    #               theme_map() +
+    #               theme( legend.title = element_blank() ) ) %>% 
+    #     config( displayModeBar = FALSE ) %>%
+    #     style( hoverlabel = label ) %>%
+    #     layout( font = font ) } )
+    
+    output$demandWAForecast <- renderEcharts4r( {
+      loadWAGer %>%
+        e_charts( x = DateTime ) %>% 
+        e_line( serie  = Min, 
+                smooth = TRUE ) %>% 
+        e_line( serie  = Max, 
+                smooth = TRUE ) %>% 
+        e_tooltip( trigger = "axis" ) %>% 
+        e_legend( right = 0 ) %>% 
+        e_title( text    = "Week-ahead forecast", 
+                 subtext = "Total demand, MWh" ) } )
     
     output$windGen  <- renderText( {
       expr = paste0( round( Germany[ AggregateType == "Wind", sum( GenerationValue ) ] / 1000L, digits = 0L ), " GW" ) } )
@@ -257,8 +328,12 @@ shiny::shinyApp(
                  options  = list( dom = "t" ), 
                  filter   = list( position = "top" ),
                  rownames = FALSE,
-                 style    = "bootstrap" ) } 
-      ) 
+                 style    = "bootstrap" ) } )
+    
+    
+    
+    
+    
     }
   )
 

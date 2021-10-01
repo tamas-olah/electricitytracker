@@ -85,7 +85,7 @@ generation_page <- argonTabItem(
           
           argonRow(
             
-            plotlyOutput( "generationRT", height = "580px" )
+            # echarts4rOutput( "generationRT", height = "580px" )
             )
           ),
         
@@ -125,21 +125,35 @@ generation_page <- argonTabItem(
             
             width        = 12L,
             src          = NULL,
-            icon         = icon(name = "cogs"),
-            status       = "default",
+            icon         = NULL, #icon(name = "cogs"),
+            status       = NULL, #"default",
             shadow       = TRUE,
-            border_level = 2L,
+            border_level = 8L,
             hover_shadow = TRUE,
-            title        = "Forecast",
+            title        = NULL, #"Forecast",
             
             argonRow(
               
               argonColumn(
                 
-                width = 6L,
-                "🚧 Under construction 🚧"
+                width = 12L,
+                echarts4rOutput("GenDAGerPlot", width = "100%")
+                
                 )
               )
+            ),
+          
+          argonCard(
+            
+            width        = 12L,
+            src          = NULL,
+            icon         = NULL,
+            status       = NULL,
+            shadow       = TRUE,
+            border_level = 8L,
+            hover_shadow = TRUE,
+            title        = NULL,
+            echarts4rOutput("GenDAWSGerPlot", width = "100%")
             )
           )
         )

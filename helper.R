@@ -155,8 +155,7 @@ downloadGenRT    <- function( eic_code, period_start, period_end ) {
   genRT <- genRT[ i       = ,
                   j       = lapply( X   = .SD,
                                     FUN = mean ),
-                  by      = c( "DateTime", "BiddingZone", "Date", "Year", "Month", 
-                               "Hour", "GenerationType" ),
+                  by      = c( "DateTime", "BiddingZone", "Date", "Year", "Month", "Hour", "GenerationType" ),
                   .SDcols = "GenerationValue" ]
   
   genRT[ GenerationType %in% c( "Wind Offshore", "Wind Onshore" ), 
@@ -217,13 +216,13 @@ downloadGenDA    <- function( eic_code, period_start, period_end ) {
 }
 
 downloadGenDAWS  <- function( eic_code, period_start, period_end ) {
-  # genDAWS <- en_generation_day_ahead_gen_forecast_ws( eic          = eic_code,
-  #                                                     period_start = period_start,
-  #                                                     period_end   = period_end ) %>% setDT()
+  genDAWS <- en_generation_day_ahead_gen_forecast_ws( eic          = eic_code,
+                                                      period_start = period_start,
+                                                      period_end   = period_end ) %>% setDT()
   
-  genDAWS <- en_generation_day_ahead_gen_forecast_ws( eic          = "10Y1001A1001A83F",
-                                                      period_start = ymd( today(), tz = "CET" ),
-                                                      period_end   = ymd( today(), tz = "CET" ) + days( 3L ) ) %>% setDT()
+  # genDAWS <- en_generation_day_ahead_gen_forecast_ws( eic          = "10Y1001A1001A83F",
+  #                                                     period_start = ymd( today(), tz = "CET" ),
+  #                                                     period_end   = ymd( today(), tz = "CET" ) + days( 3L ) ) %>% setDT()
   
   dict    <- en_generation_codes()
   
