@@ -101,7 +101,7 @@ generation_page <- argonTabItem(
             icon         = icon( "cogs" ),
             status       = "default",
             shadow       = TRUE,
-            border_level = 2L,
+            border_level = 8L,
             hover_shadow = TRUE,
             title        = "Long-term",
             
@@ -121,28 +121,9 @@ generation_page <- argonTabItem(
           tabName = "Forecast",
           active  = FALSE,
           
-          argonCard(
-            
-            width        = 12L,
-            src          = NULL,
-            icon         = NULL, #icon(name = "cogs"),
-            status       = NULL, #"default",
-            shadow       = TRUE,
-            border_level = 8L,
-            hover_shadow = TRUE,
-            title        = NULL, #"Forecast",
-            
-            argonRow(
-              
-              argonColumn(
-                
-                width = 12L,
-                echarts4rOutput("GenDAGerPlot", width = "100%")
-                
-                )
-              )
-            ),
-          
+          argonRow(
+            argonColumn(width = 12L,
+          argonRow(
           argonCard(
             
             width        = 12L,
@@ -153,8 +134,26 @@ generation_page <- argonTabItem(
             border_level = 8L,
             hover_shadow = TRUE,
             title        = NULL,
-            echarts4rOutput("GenDAWSGerPlot", width = "100%")
+                echarts4rOutput( "GenDAWSGerPlot", width = "100%")
+                
+                )
+              ),
+          argonRow(
+            argonCard(
+            
+            width        = 12L,
+            src          = NULL,
+            icon         = NULL,
+            status       = NULL,
+            shadow       = TRUE,
+            border_level = 8L,
+            hover_shadow = TRUE,
+            title        = NULL,
+            echarts4rOutput( "GenDAGerPlot", width = "100%") )
             )
+            ) )
+          
+          
           )
         )
       )

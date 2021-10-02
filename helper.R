@@ -12,7 +12,7 @@ downloadLoadRT   <- function( eic_code, period_start, period_end ) {
   loadRT[ i = ,
           j = unit := NULL ]
   
-  colnames( loadRT ) <- c( "DateTime", "LoadValue", "BiddingZone" )
+  colnames( loadRT ) <- c( "DateTime", "TotalLoad", "BiddingZone" )
   
   loadRT$DateTime    <- with_tz( loadRT$DateTime, tzone = "CET" )
   
@@ -40,9 +40,9 @@ downloadLoadRT   <- function( eic_code, period_start, period_end ) {
                     by      = c( "DateTime", "BiddingZone", "Date", "Year", "Month", "Hour"
                                  # , "LoadType" 
                                  ),
-                    .SDcols = "LoadValue" ]
+                    .SDcols = "TotalLoad" ]
   
-  loadRT$LoadValue <- round( loadRT$LoadValue, digits = 0L )
+  loadRT$TotalLoad <- round( loadRT$TotalLoad, digits = 0L )
   
   return( loadRT )
 }
@@ -189,7 +189,7 @@ downloadGenRT    <- function( eic_code, period_start, period_end ) {
   dt <- dt[ , GenerationType := reorder( GenerationType, -stdev ) ]
   
   genRT$GenerationType <- factor( x       = genRT$GenerationType,
-                                  levels  = levels( dt$GenerationType ) )
+                                  levels  = rev(levels( dt$GenerationType ) ) )
 
   genRT <- genRT %>% fill( BiddingZone, .direction = "down" )
   

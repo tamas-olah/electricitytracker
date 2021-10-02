@@ -70,11 +70,14 @@ demand_page <- argonTabItem(
               
               width = 12L,
               
+              argonRow(
+              
               argonCard(
                 
                 title = NULL, #"real-time demand",
                 width = 12L,
                 icon  = NULL, #argonIcon( "pin-3" ),
+                shadow = TRUE,
                 # sliderInput(
                 #   
                 #   inputId    = "loadRTSelector",
@@ -89,7 +92,7 @@ demand_page <- argonTabItem(
                 
                 echarts4rOutput( "demandRT" )
                 )
-              )
+              ) )
             )
           ),
         
@@ -104,14 +107,18 @@ demand_page <- argonTabItem(
               
               width = 12L,
               
+              argonRow(
+              
               argonCard(
                 
-                title = "Long-term demand curve",
+                title = NULL, #"Long-term demand curve",
                 width = 12L,
-                icon  = argonIcon("sound-wave"),
-                plotlyOutput( "demandOverlay", height = "470px" )
+                icon  = NULL, #argonIcon("sound-wave"),
+                shadow = TRUE,
+                # plotlyOutput( "demandOverlay", height = "470px", width = "100%" ),
+                echarts4rOutput( "demandOverlay2", height = "470px", width = "100%" )
                 )
-              )
+              ) )
             
             # argonColumn(
             #   
@@ -159,11 +166,14 @@ demand_page <- argonTabItem(
                 
                 argonCard(
                   
-                  title        = NULL, #"Day-Ahead Demand Forecast",
                   width        = 12L,
-                  icon         = NULL, #argonIcon("curved-next"),
-                  shadow       = FALSE,
+                  src          = NULL,
+                  icon         = NULL,
+                  status       = NULL,
+                  shadow       = TRUE,
                   border_level = 8L,
+                  hover_shadow = TRUE,
+                  title        = NULL,
                   echarts4rOutput( "demandDAForecast", height = "300px" )
                   )
                 )
@@ -203,11 +213,14 @@ demand_page <- argonTabItem(
             
             argonCard(
               
-              title = NULL, #"Week-ahead Demand forecast",
-              width = 12L,
-              icon = NULL, #argonIcon("curved-next"),
-              shadow = FALSE,
+              width        = 12L,
+              src          = NULL,
+              icon         = NULL,
+              status       = NULL,
+              shadow       = TRUE,
               border_level = 8L,
+              hover_shadow = TRUE,
+              title        = NULL,
               echarts4rOutput( "demandWAForecast", height = "300px" )
               )
             )

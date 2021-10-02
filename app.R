@@ -10,15 +10,15 @@ library( plotly       )
 library( gfonts       )
 library( scales       )
 library( DT           )
-library( entsoeapi    )
+# library( entsoeapi    )
 library( echarts4r    )
 
 source( "helper.R" )
 
-countries  <- list( "10Y1001A1001A83F"   # Germany
-                    # "10YFR-RTE------C"   # France
-                    )
-
+# countries  <- list( "10Y1001A1001A83F"   # Germany
+#                     # "10YFR-RTE------C"   # France
+#                     )
+# 
 # genRT      <- lapply( X            = countries,
 #                       FUN          = downloadGenRT,
 #                       period_start = ymd( today(), tz = "CET" ) - days( 200L ),
@@ -64,7 +64,7 @@ countries  <- list( "10Y1001A1001A83F"   # Germany
 #                      all = TRUE )
 # 
 # Germany[ i  = ,
-#          j  = ResidualLoad := LoadValue - RenewableGen ]
+#          j  = ResidualLoad := TotalLoad - RenewableGen ]
 # 
 # write_fst( Germany, "data/Germany0929.fst" )
 Germany    <- read_fst("data/Germany0929.fst", as.data.table = TRUE )
@@ -74,7 +74,7 @@ Germany    <- read_fst("data/Germany0929.fst", as.data.table = TRUE )
 
 # Germany    <- merge( x   = Germany,
 #                      y   = resLoad,
-#                      by  = c( "DateTime", "LoadValue", "LoadType" ),
+#                      by  = c( "DateTime", "TotalLoad", "LoadType" ),
 #                      all = TRUE )
 
 
@@ -175,10 +175,16 @@ shiny::shinyApp(
                 symbol = "none",
                 serie  = GenerationValue,
                 stack  = "Total" ) %>% 
-        e_datazoom( type  = "slider" ) %>% 
+        e_grid(right = "33%") %>% 
+        e_tooltip( trigger = "axis" ) %>% 
+        e_datazoom( type  = "slider",
+                    start = 50L, 
+                    end   = 100L ) %>% 
         e_legend( orient = "vertical",
-                  right = 0,
-                  top = "center")
+                  right  = "10%",
+                  top    = "center") %>% 
+        e_title( text    = "Generation by Type", 
+                 subtext = "Total generation, MWh" )
         } )
     
     output$GenDAGerPlot <- renderEcharts4r( {
@@ -188,7 +194,8 @@ shiny::shinyApp(
         e_tooltip( trigger = "axis" ) %>% 
         e_legend( show = FALSE ) %>% 
         e_title( text    = "Day-ahead forecast", 
-                 subtext = "Total generation, MWh" )} )
+                 subtext = "Total generation, MWh" ) %>% 
+        e_datazoom( type  = "inside" ) } )
     
     output$GenDAWSGerPlot <- renderEcharts4r( {
       genDAWSGer %>% 
@@ -196,15 +203,16 @@ shiny::shinyApp(
         e_charts( x = DateTime ) %>% 
         e_line( serie = GenerationValue, smooth = TRUE ) %>% 
         e_tooltip( trigger = "axis" ) %>% 
-        e_legend( right = 0L ) %>% 
+        e_legend( right = "10%" ) %>% 
         e_title( text    = "Day-ahead forecast", 
-                 subtext = "Wind and solar generation, MWh" ) } )
+                 subtext = "Wind and solar generation, MWh" ) %>% 
+        e_datazoom( type  = "inside" ) } )
     
     output$demandOverlay <- renderPlotly( {
       ggplotly( ggplot() +
                   geom_line( data = Germany,
                              mapping = aes( x     = Hour,
-                                            y     = LoadValue,
+                                            y     = TotalLoad,
                                             group = Date,
                                             color = Month ),
                              size  = 0.1,
@@ -221,10 +229,24 @@ shiny::shinyApp(
         style( hoverlabel = label ) %>%
         layout( font = font ) } )
     
+    output$demandOverlay2 <- renderEcharts4r( {
+      unique( Germany[ i = ,
+                       j = .( TotalLoad, Date, Month, Hour ) ] ) %>% 
+        group_by( Date, Month ) %>% 
+        e_charts( x = Hour ) %>% 
+        e_line( serie  = TotalLoad,
+                symbol = "none",
+                smooth = TRUE ) %>% 
+        e_legend( show = FALSE ) %>% 
+        e_tooltip( trigger = "item" ) %>% 
+        e_title( text    = "Long-term demand curve", 
+                 subtext = "Total demand, MWh" ) %>% 
+        e_datazoom( type  = "inside" ) } )
+    
     # output$demandRT <- renderPlotly( {
     #   ggplotly( ggplot( data = Germany[ DateTime > today( tzone = "CET" ) - 5L ] ) +
     #               geom_line( mapping = aes( x     = DateTime,
-    #                                         y     = LoadValue,
+    #                                         y     = TotalLoad,
     #                                         color = LoadType),
     #                          na.rm = TRUE)  +
     #               scale_y_continuous( labels = label_number( suffix = "K", scale = 1e-3 ),
@@ -246,12 +268,19 @@ shiny::shinyApp(
     
     output$demandRT <- renderEcharts4r( {
       unique( Germany[ i = DateTime > ymd( today() ) - days ( 30 ),
-                       j = .( DateTime, LoadValue, ResidualLoad ) ] ) %>%
+                       j = .( DateTime, TotalLoad, ResidualLoad ) ] ) %>%
         e_charts( x = DateTime ) %>% 
-        e_line( serie = LoadValue, smooth = TRUE ) %>% 
-        e_line( serie = ResidualLoad, smooth = TRUE ) %>% 
+        e_line( serie = TotalLoad, 
+                symbol = "none",
+                smooth = TRUE ) %>% 
+        e_line( serie = ResidualLoad, smooth = TRUE, symbol = "none" ) %>% 
+        e_legend( right = "10%" ) %>% 
         e_tooltip( trigger = "axis" ) %>% 
-        e_datazoom( x_index = c( 0L, 1L ) ) } )
+        e_title( text    = "Real-time demand", 
+                 subtext = "Total demand, MWh" ) %>% 
+        e_datazoom( type  = "slider",
+                    start = 80L,
+                    end   = 100L ) } )
     
     # output$demandDAForecast <- renderPlotly( {
     #   ggplotly( ggplot( data = loadDAGer ) +
@@ -274,7 +303,8 @@ shiny::shinyApp(
         e_tooltip( trigger = "axis" ) %>% 
         e_legend( show = FALSE ) %>% 
         e_title( text    = "Day-ahead forecast", 
-                 subtext = "Total demand, MWh" ) } )
+                 subtext = "Total demand, MWh" ) %>% 
+        e_datazoom( type  = "inside" ) } )
     
     # output$demandWAForecast <- renderPlotly( {
     #   ggplotly( ggplot( data    = loadWAGer,
@@ -304,34 +334,43 @@ shiny::shinyApp(
         e_line( serie  = Max, 
                 smooth = TRUE ) %>% 
         e_tooltip( trigger = "axis" ) %>% 
-        e_legend( right = 0 ) %>% 
+        e_legend( right = "10%" ) %>% 
         e_title( text    = "Week-ahead forecast", 
-                 subtext = "Total demand, MWh" ) } )
+                 subtext = "Total demand, MWh" ) %>% 
+        e_datazoom( type  = "inside" ) } )
     
     output$windGen  <- renderText( {
-      expr = paste0( round( Germany[ AggregateType == "Wind", sum( GenerationValue ) ] / 1000L, digits = 0L ), " GW" ) } )
+      expr = paste0( round( Germany[ AggregateType == "Wind" & DateTime > ymd( today() ) - days ( 4L ),
+                                     sum( GenerationValue ) ] / 1000L, digits = 0L ), " GW" ) } )
     output$windPerc <- renderText( {
-      expr = paste0( round( Germany[ AggregateType == "Wind", sum( GenerationValue ) ] / sum( Germany$GenerationValue, na.rm = TRUE ) * 100L, digits = 1L ) ) } )
+      expr = paste0( round( Germany[ AggregateType == "Wind" & DateTime > ymd( today() ) - days ( 4L ),
+                                     sum( GenerationValue ) ] / sum( Germany[DateTime > ymd( today() ) - days ( 4L )]$GenerationValue, na.rm = TRUE ) * 100L, digits = 1L ) ) } )
     
     output$solarGen  <- renderText( {
-      expr = paste0( round( Germany[ AggregateType == "Solar", sum( GenerationValue ) ] / 1000L, digits = 0L ), " GW" ) } )
+      expr = paste0( round( Germany[ AggregateType == "Solar" & DateTime > ymd( today() ) - days ( 4L ),
+                                     sum( GenerationValue ) ] / 1000L, digits = 0L ), " GW" ) } )
     output$solarPerc <- renderText( {
-      expr = paste0( round( Germany[ AggregateType == "Solar", sum( GenerationValue ) ] / sum( Germany$GenerationValue, na.rm = TRUE ) * 100L, digits = 1L ) ) } )
+      expr = paste0( round( Germany[ AggregateType == "Solar" & DateTime > ymd( today() ) - days ( 4L ),
+                                     sum( GenerationValue ) ] / sum( Germany[DateTime > ymd( today() ) - days ( 4L )]$GenerationValue, na.rm = TRUE ) * 100L, digits = 1L ) ) } )
 
     output$fossilGen  <- renderText( {
-      expr = paste0( round( Germany[ AggregateType == "Fossil", sum( GenerationValue ) ] / 1000L, digits = 0L ), " GW" ) } )
+      expr = paste0( round( Germany[ AggregateType == "Fossil" & DateTime > ymd( today() ) - days ( 4L ),
+                                     sum( GenerationValue ) ] / 1000L, digits = 0L ), " GW" ) } )
     output$fossilPerc <- renderText( {
-      expr = paste0( round( Germany[ AggregateType == "Fossil", sum( GenerationValue ) ] / sum( Germany$GenerationValue, na.rm = TRUE ) * 100L, digits = 1L ) ) } )
+      expr = paste0( round( Germany[ AggregateType == "Fossil" & DateTime > ymd( today() ) - days ( 4L ),
+                                     sum( GenerationValue ) ] / sum( Germany[DateTime > ymd( today() ) - days ( 4L )]$GenerationValue, na.rm = TRUE ) * 100L, digits = 1L ) ) } )
 
     output$nuclearGen <- renderText( {
-      expr = paste0( round( Germany[ AggregateType == "Nuclear", sum( GenerationValue ) ] / 1000L, digits = 0L ), " GW" ) } )
+      expr = paste0( round( Germany[ AggregateType == "Nuclear" & DateTime > ymd( today() ) - days ( 4L ),
+                                     sum( GenerationValue ) ] / 1000L, digits = 0L ), " GW" ) } )
     output$nuclearPerc <- renderText( {
-      expr = paste0( round( Germany[ AggregateType == "Nuclear", sum( GenerationValue ) ] / sum( Germany$GenerationValue, na.rm = TRUE ) * 100L, digits = 1L ) ) } )
+      expr = paste0( round( Germany[ AggregateType == "Nuclear" & DateTime > ymd( today() ) - days ( 4L ),
+                                     sum( GenerationValue ) ] / sum( Germany[DateTime > ymd( today() ) - days ( 4L )]$GenerationValue, na.rm = TRUE ) * 100L, digits = 1L ) ) } )
     
     output$GermanyData <- renderDataTable( {
       
       datatable( Germany[ i = ,
-                          j = .( DateTime, LoadValue, LoadType, 
+                          j = .( DateTime, TotalLoad, 
                                  GenerationType, GenerationValue ) ],
                  options  = list( dom = "t" ), 
                  filter   = list( position = "top" ),
