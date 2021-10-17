@@ -19,7 +19,7 @@ about_page <- argonTabItem(
         url_1    = "https://www.linkedin.com/in/tamasolah/",
         url_2    = "https://github.com/tamas-olah",
         stats    = argonProfileStats(),
-        "Hey Lu! Let me know if you see this 🌺",
+        "",
         img(src = "doge.png", height = 500, width = 500)
         )
       )

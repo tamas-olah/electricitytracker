@@ -446,7 +446,7 @@ shiny::shinyApp(
                                    formatter  = "{b}",
                                    color      = "#464646",
                                    fontWeight = "bold",
-                                   fontSize   = 9L,
+                                   fontSize   = 10L,
                                    textBorderColor = "white" ) ) %>%
         e_graph_nodes( nodes    = net$nodes,
                        names    = name,
