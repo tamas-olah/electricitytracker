@@ -4,8 +4,8 @@ dashFooter <- argonDashFooter(
   src        = NULL,
   
   argonFooterMenu(
-    
-    argonFooterItem( h6( p( "Last refreshed on ", 
-                            textOutput( "Refresh1", inline = TRUE ) ) ) )
+
+    argonFooterItem( h6( p( "Last data refresh: ",
+                            textOutput( "updateDate", inline = TRUE ) ) ) )
     )
   )

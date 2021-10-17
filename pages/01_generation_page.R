@@ -81,11 +81,16 @@ generation_page <- argonTabItem(
               )
             ),
           
-          br(),br(),
+          br(),
           
           argonRow(
             
-            echarts4rOutput( "generationRT", height = "580px" )
+            argonCard(
+              
+              width = 12L,
+              
+              echarts4rOutput( "generationRT", height = "580px" )
+              )
             )
           ),
         
@@ -122,38 +127,45 @@ generation_page <- argonTabItem(
           active  = FALSE,
           
           argonRow(
-            argonColumn(width = 12L,
-          argonRow(
-          argonCard(
             
-            width        = 12L,
-            src          = NULL,
-            icon         = NULL,
-            status       = NULL,
-            shadow       = TRUE,
-            border_level = 8L,
-            hover_shadow = TRUE,
-            title        = NULL,
-                echarts4rOutput( "GenDAWSGerPlot", width = "100%")
+            argonColumn(
+              
+              width = 12L,
+              
+              argonRow(
                 
+                argonCard(
+                  
+                  width        = 12L,
+                  src          = NULL,
+                  icon         = NULL,
+                  status       = NULL,
+                  shadow       = TRUE,
+                  border_level = 8L,
+                  hover_shadow = TRUE,
+                  title        = NULL,
+                  
+                  echarts4rOutput( "GenDAWSGerPlot", width = "100%")
+                  )
+                ),
+              
+              argonRow(
+                
+                argonCard(
+                  
+                  width        = 12L,
+                  src          = NULL,
+                  icon         = NULL,
+                  status       = NULL,
+                  shadow       = TRUE,
+                  border_level = 8L,
+                  hover_shadow = TRUE,
+                  title        = NULL,
+                  echarts4rOutput( "GenDAGerPlot", width = "100%") 
+                  )
                 )
-              ),
-          argonRow(
-            argonCard(
-            
-            width        = 12L,
-            src          = NULL,
-            icon         = NULL,
-            status       = NULL,
-            shadow       = TRUE,
-            border_level = 8L,
-            hover_shadow = TRUE,
-            title        = NULL,
-            echarts4rOutput( "GenDAGerPlot", width = "100%") )
+              )
             )
-            ) )
-          
-          
           )
         )
       )

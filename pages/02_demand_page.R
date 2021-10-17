@@ -90,7 +90,20 @@ demand_page <- argonTabItem(
                 #   timeFormat = "%b %Y"
                 # ),
                 
-                echarts4rOutput( "demandRT" )
+                echarts4rOutput( "demandRT" ),
+                br(),
+                argonButton( name         = "Click me",
+                             status       = "danger",
+                             icon         = icon("bell"),
+                             size         = "sm",
+                             toggle_modal = TRUE,
+                             modal_id     = "modal1" ),
+                argonModal( id       = "modal1",
+                            title    = "What is “residual load”?",
+                            status   = "default",
+                            gradient = TRUE,
+                            "Residual load refers to the demand for electrical power (“TotalLoad”) in a power grid after eliminating the share of fluctuating feed-in from supply-dependent generators such as wind farms and photovoltaic plants. The residual load thus represents the demand that must be met by the available, dispatchable power plants (such as storage power plants and thermal power plants). "
+                )
                 )
               ) )
             )
@@ -116,7 +129,20 @@ demand_page <- argonTabItem(
                 icon  = NULL, #argonIcon("sound-wave"),
                 shadow = TRUE,
                 # plotlyOutput( "demandOverlay", height = "470px", width = "100%" ),
-                echarts4rOutput( "demandOverlay2", height = "470px", width = "100%" )
+                echarts4rOutput( "demandOverlay2", height = "470px", width = "100%" ),
+                br(),
+                argonButton( name         = "Click me",
+                             status       = "danger",
+                             icon         = icon("bell"),
+                             size         = "sm",
+                             toggle_modal = TRUE,
+                             modal_id     = "modal2" ),
+                argonModal( id       = "modal2",
+                            title    = "What is “long term demand curve”?",
+                            status   = "default",
+                            gradient = TRUE,
+                            ""
+                )
                 )
               ) )
             
