@@ -54,16 +54,16 @@ shiny::shinyApp(
   
   server = function( input, output ) {
     
-    # Download files from Google Drive to local folder
+    # Fetch files from Google Drive to local folder
     lapply( X         = drive_find( pattern = "fst" )$name, 
             FUN       = function( i ) { drive_download( file      = i,
                                                         path      = paste0( "data_dynamic/", i ),
                                                         overwrite = TRUE ) } )
     
-    # List downloaded files in local folder
+    # List fetched files in local folder
     fileList <- list.files( path = "data_dynamic", pattern = "*.fst", full.names = TRUE )
     
-    # Read downloaded files into environment (while also cleaning them up)
+    # Read fetched files into environment
     list2env( lapply( X = setNames( object = fileList,
                                     nm     = make.names( stri_replace_all_regex( str         = fileList,
                                                                                  pattern     = c( "^data_dynamic/", ".fst$" ), 
@@ -81,41 +81,19 @@ shiny::shinyApp(
     output$updateDate <- renderText( { updateDate } )
     
     
+    ######################################################################
+    #####                GENERATION REAL-TIME                        #####
+    ######################################################################
     
-    dataGenRT <- reactive ( {
-      if ( input$dropdown12 == "Germany" ) {
-        genRT <- Germany
-      } else if ( input$dropdown12 == "France" ) {
-        genRT <- France
-      }
-      return( genRT )
-    } )
-    
-    # output$demandTitle <- renderText( {
-    #   if ( input$dropdown == "Germany" ) {
-    #     return( "Germany" )
-    #   } else if ( input$dropdown == "France" ) {
-    #     return( "France" )
-    #   }
-    # } )
-    
-    # output$generationRT <- renderPlotly( {
-    #   ggplotly( ggplot() +
-    #               geom_area( data    = Germany,
-    #                          mapping = aes( x    = DateTime, 
-    #                                         y    = GenerationValue,
-    #                                         fill = GenerationType ) ,
-    #                          alpha = 0.9 ) +
-    #               theme_map() +
-    #               theme( legend.title = element_blank() ) +
-    #               scale_y_continuous( labels = label_number( suffix = "K", scale = 1e-3 ) ) +
-    #               scale_x_datetime( breaks = "1 days", date_labels = "%b %d %H:%M" ) ) %>%
-    #     config( displayModeBar = FALSE ) %>%
-    #     style( hoverlabel = label ) %>%
-    #     layout( font = font ) } )
+    dataGenLoadRT <- reactive ( {
+      if ( input$dropdown12 == "Germany" ) 
+        { dataGenLoadRT <- Germany } 
+      else if ( input$dropdown12 == "France" ) 
+        { dataGenLoadRT <- France }
+      return( dataGenLoadRT ) } )
     
     output$generationRT <- renderEcharts4r( {
-      unique( dataGenRT()[ i = DateTime > ymd( today() ) - days ( 4L ),
+      unique( dataGenLoadRT()[ i = DateTime > ymd( today() ) - days ( 4L ),
                            j = .( DateTime, GenerationValue, GenerationType ) ] ) %>%
         group_by( GenerationType ) %>%
         e_charts( x = DateTime ) %>%
@@ -140,14 +118,18 @@ shiny::shinyApp(
         e_show_loading()
         } )
     
+    
+    ######################################################################
+    #####                GENERATION FORECAST DAY-AHEAD               #####
+    ######################################################################
+    
     dataGenDA <- reactive ( {
-      if ( input$dropdown12 == "Germany" ) {
-        genDA <- genDAGer
-      } else if ( input$dropdown12 == "France" ) {
-        genDA <- genDAFra
-      }
-      return( genDA )
-    } )
+      if ( input$dropdown12 == "Germany" )
+        { dataGenDA <- genDAGer }
+      else if ( input$dropdown12 == "France" )
+        { dataGenDA <- genDAFra }
+      return( dataGenDA ) } )
+    
     output$GenDAGerPlot <- renderEcharts4r( {
       dataGenDA() %>% 
         e_charts( x = DateTime ) %>% 
@@ -156,18 +138,21 @@ shiny::shinyApp(
         e_legend( show = FALSE ) %>% 
         e_title( text    = "Day-ahead generation forecast", 
                  subtext = "Total generation, MWh" ) %>% 
-        e_color(pal1) %>% 
-        e_datazoom( type  = "inside" )%>% 
+        e_color( pal1 ) %>% 
+        e_datazoom( type  = "inside" ) %>% 
         e_show_loading() } )
     
+    ######################################################################
+    #####                GENERATION FORECAST WIND & SOLAR            #####
+    ######################################################################
+    
     dataGenDAWS <- reactive ( {
-      if ( input$dropdown12 == "Germany" ) {
-        genDAWS <- genDAWSGer
-      } else if ( input$dropdown12 == "France" ) {
-        genDAWS <- genDAWSFra
-      }
-      return( genDAWS )
-    } )
+      if ( input$dropdown12 == "Germany" )
+        { dataGenDAWS <- genDAWSGer } 
+      else if ( input$dropdown12 == "France" ) 
+        { dataGenDAWS <- genDAWSFra }
+      return( dataGenDAWS ) } )
+    
     output$GenDAWSGerPlot <- renderEcharts4r( {
       dataGenDAWS() %>% 
         group_by( GenerationType ) %>% 
@@ -177,38 +162,20 @@ shiny::shinyApp(
         e_legend( right = "10%" ) %>% 
         e_title( text    = "Day-ahead generation forecast", 
                  subtext = "Wind and solar generation, MWh" ) %>% 
-        e_color(pal1) %>% 
+        e_color( pal1 ) %>% 
         e_datazoom( type  = "inside" )%>% 
         e_show_loading() } )
     
-    # output$demandOverlay <- renderPlotly( {
-    #   ggplotly( ggplot() +
-    #               geom_line( data = Germany,
-    #                          mapping = aes( x     = Hour,
-    #                                         y     = TotalLoad,
-    #                                         group = Date,
-    #                                         color = Month ),
-    #                          size  = 0.1,
-    #                          na.rm = TRUE ) +
-    #               scale_y_continuous( labels = label_number( suffix = "K", scale = 1e-3 ),
-    #                                   limits = c( 20000L, 95000L ) ) +
-    #               # scale_y_continuous( labels = function( x ) format( x, big.mark = " ", scientific = FALSE ),
-    #               #                     limits = c( 20000L, 95000L ) ) +
-    #               scale_x_continuous( labels = xaxishours )  +
-    #               scale_color_discrete() +
-    #               theme_map() +
-    #               theme( legend.title = element_blank() ) ) %>% 
-    #     config( displayModeBar = FALSE ) %>%
-    #     style( hoverlabel = label ) %>%
-    #     layout( font = font ) } )
 
+    ######################################################################
+    #####                LOAD LONG-TERM CURVE                        #####
+    ######################################################################
     
     output$demandOverlay2 <- renderEcharts4r( {
-      unique( dataGenRT()[ i = ,
+      unique( dataGenLoadRT()[ i = ,
                            j = .( TotalLoad, Date, Month, Hour ) ] ) %>% 
         mutate( width = 0.01 ) %>% 
         group_by( Date, Month ) %>% 
-        
         e_charts( x = Hour ) %>% 
         e_line( serie  = TotalLoad,
                 symbol = "none",
@@ -222,32 +189,13 @@ shiny::shinyApp(
         e_add_nested( "lineStyle", width )%>% 
         e_show_loading() } )
     
-    # output$demandRT <- renderPlotly( {
-    #   ggplotly( ggplot( data = Germany[ DateTime > today( tzone = "CET" ) - 5L ] ) +
-    #               geom_line( mapping = aes( x     = DateTime,
-    #                                         y     = TotalLoad,
-    #                                         color = LoadType),
-    #                          na.rm = TRUE)  +
-    #               scale_y_continuous( labels = label_number( suffix = "K", scale = 1e-3 ),
-    #                                   limits = c( 0L, 95000L ) ) +
-    #               scale_x_datetime( breaks      = "1 days", 
-    #                                 date_labels = "%b %d %H:%M" ) +
-    #               scale_color_discrete( type         = c( "#ff004f", "#6663e7" ),
-    #                                     na.translate = TRUE ) +
-    #               theme_map() +
-    #               theme( legend.title    = element_blank(),
-    #                      legend.position = "bottom" ) ) %>%
-    #     config( displayModeBar = FALSE ) %>%
-    #     style( hoverlabel = label ) %>%
-    #     layout( font   = font,
-    #             legend = list( orientation = "h",
-    #                            x           = 0.25, 
-    #                            y           = -0.2 ) ) } )
-    
 
+    ######################################################################
+    #####                LOAD REAL-TIME                              #####
+    ######################################################################
     
     output$demandRT <- renderEcharts4r( {
-      unique( dataGenRT()[ i = DateTime > ymd( today() ) - days ( 30 ),
+      unique( dataGenLoadRT()[ i = DateTime > ymd( today() ) - days ( 30 ),
                            j = .( DateTime, TotalLoad, ResidualLoad ) ] ) %>%
         e_charts( x = DateTime ) %>% 
         e_line( serie = TotalLoad, 
@@ -266,27 +214,18 @@ shiny::shinyApp(
                     end   = 100L )%>% 
         e_show_loading() } )
     
-    # output$demandDAForecast <- renderPlotly( {
-    #   ggplotly( ggplot( data = loadDAGer ) +
-    #               geom_line( mapping = aes( x = DateTime, 
-    #                                         y = LoadForecastDA ),
-    #                          color   = "#6663e7" ) +
-    #               scale_y_continuous( labels = label_number( suffix = "K", scale = 1e-3 ),
-    #                                   limits = c( 20000L, 80000L ) ) +
-    #               scale_x_datetime( breaks = "4 hours", date_labels = "%b %d %H:%M" ) +
-    #               theme_map() +
-    #               theme( legend.title = element_blank() ) ) %>%
-    #     config( displayModeBar = FALSE ) %>%
-    #     style( hoverlabel = label ) %>%
-    #     layout( font = font ) } )
+    
+    ######################################################################
+    #####                LOAD FORECAST DAY-AHEAD                     #####
+    ######################################################################
+    
     dataLoadDA <- reactive ( {
-      if ( input$dropdown12 == "Germany" ) {
-        loadDA <- loadDAGer
-      } else if ( input$dropdown12 == "France" ) {
-        loadDA <- loadDAFra
-      }
-      return( loadDA )
-    } )
+      if ( input$dropdown12 == "Germany" ) 
+        { dataLoadDA <- loadDAGer }
+      else if ( input$dropdown12 == "France" )
+        { dataLoadDA <- loadDAFra }
+      return( dataLoadDA ) } )
+    
     output$demandDAForecast <- renderEcharts4r( {
       dataLoadDA() %>%
         e_charts( x = DateTime ) %>% 
@@ -299,33 +238,18 @@ shiny::shinyApp(
         e_datazoom( type  = "inside" )%>% 
         e_show_loading() } )
     
-    # output$demandWAForecast <- renderPlotly( {
-    #   ggplotly( ggplot( data    = loadWAGer,
-    #                     mapping = aes( x = DateTime ) ) +
-    #               geom_ribbon( mapping = aes( ymin = Min, 
-    #                                           ymax = Max ),
-    #                            fill    = "#6663e7",
-    #                            alpha   = 0.2 ) +
-    #               geom_line( mapping = aes( y = Min ),
-    #                          color   = "#6663e7" ) +
-    #               geom_line( mapping = aes( y = Max ),
-    #                          color   = "#6663e7" ) +
-    #               scale_y_continuous( labels = label_number( suffix = "K", scale = 1e-3 ),
-    #                                   limits = c( 20000L, 80000L ) ) +
-    #               scale_x_datetime( breaks = "1 days", date_labels = "%b %d") +
-    #               theme_map() +
-    #               theme( legend.title = element_blank() ) ) %>% 
-    #     config( displayModeBar = FALSE ) %>%
-    #     style( hoverlabel = label ) %>%
-    #     layout( font = font ) } )
+    
+    ######################################################################
+    #####                LOAD FORECAST WEEK-AHEAD                    #####
+    ######################################################################
+    
     dataLoadWA <- reactive ( {
-      if ( input$dropdown12 == "Germany" ) {
-        loadWA <- loadWAGer
-      } else if ( input$dropdown12 == "France" ) {
-        loadWA <- loadWAFra
-      }
-      return( loadWA )
-    } )
+      if ( input$dropdown12 == "Germany" )
+        { dataLoadWA <- loadWAGer } 
+      else if ( input$dropdown12 == "France" ) 
+        { dataLoadWA <- loadWAFra }
+      return( dataLoadWA ) } )
+    
     output$demandWAForecast <- renderEcharts4r( {
       dataLoadWA() %>%
         e_charts( x = DateTime ) %>% 
@@ -341,60 +265,71 @@ shiny::shinyApp(
         e_datazoom( type  = "inside" )%>% 
         e_show_loading() } )
     
+    
+    ######################################################################
+    #####                GENERATION INFO BOXES                       #####
+    ######################################################################
+    
     output$windGen  <- renderText( {
-      expr = paste0( round( dataGenRT()[ AggregateType == "Wind" & DateTime > ymd( today() ) - days ( 4L ),
+      expr = paste0( round( dataGenLoadRT()[ AggregateType == "Wind" & DateTime > ymd( today() ) - days ( 4L ),
                                      sum( GenerationValue ) ] / 1000000L, digits = 1L ), " TW" ) } )
     output$windPerc <- renderText( {
-      expr = paste0( round( dataGenRT()[ AggregateType == "Wind" & DateTime > ymd( today() ) - days ( 4L ),
-                                     sum( GenerationValue ) ] / sum( dataGenRT()[DateTime > ymd( today() ) - days ( 4L )]$GenerationValue, na.rm = TRUE ) * 100L, digits = 1L ) ) } )
+      expr = paste0( round( dataGenLoadRT()[ AggregateType == "Wind" & DateTime > ymd( today() ) - days ( 4L ),
+                                     sum( GenerationValue ) ] / sum( dataGenLoadRT()[DateTime > ymd( today() ) - days ( 4L )]$GenerationValue, na.rm = TRUE ) * 100L, digits = 1L ) ) } )
     
     output$solarGen  <- renderText( {
-      expr = paste0( round( dataGenRT()[ AggregateType == "Solar" & DateTime > ymd( today() ) - days ( 4L ),
+      expr = paste0( round( dataGenLoadRT()[ AggregateType == "Solar" & DateTime > ymd( today() ) - days ( 4L ),
                                      sum( GenerationValue ) ] / 1000000L, digits = 1L ), " TW" ) } )
     output$solarPerc <- renderText( {
-      expr = paste0( round( dataGenRT()[ AggregateType == "Solar" & DateTime > ymd( today() ) - days ( 4L ),
-                                     sum( GenerationValue ) ] / sum( dataGenRT()[DateTime > ymd( today() ) - days ( 4L )]$GenerationValue, na.rm = TRUE ) * 100L, digits = 1L ) ) } )
+      expr = paste0( round( dataGenLoadRT()[ AggregateType == "Solar" & DateTime > ymd( today() ) - days ( 4L ),
+                                     sum( GenerationValue ) ] / sum( dataGenLoadRT()[DateTime > ymd( today() ) - days ( 4L )]$GenerationValue, na.rm = TRUE ) * 100L, digits = 1L ) ) } )
 
     output$fossilGen  <- renderText( {
-      expr = paste0( round( dataGenRT()[ AggregateType == "Fossil" & DateTime > ymd( today() ) - days ( 4L ),
+      expr = paste0( round( dataGenLoadRT()[ AggregateType == "Fossil" & DateTime > ymd( today() ) - days ( 4L ),
                                      sum( GenerationValue ) ] / 1000000L, digits = 1L ), " TW" ) } )
     output$fossilPerc <- renderText( {
-      expr = paste0( round( dataGenRT()[ AggregateType == "Fossil" & DateTime > ymd( today() ) - days ( 4L ),
-                                     sum( GenerationValue ) ] / sum( dataGenRT()[DateTime > ymd( today() ) - days ( 4L )]$GenerationValue, na.rm = TRUE ) * 100L, digits = 1L ) ) } )
+      expr = paste0( round( dataGenLoadRT()[ AggregateType == "Fossil" & DateTime > ymd( today() ) - days ( 4L ),
+                                     sum( GenerationValue ) ] / sum( dataGenLoadRT()[DateTime > ymd( today() ) - days ( 4L )]$GenerationValue, na.rm = TRUE ) * 100L, digits = 1L ) ) } )
 
     output$nuclearGen <- renderText( {
-      expr = paste0( round( dataGenRT()[ AggregateType == "Nuclear" & DateTime > ymd( today() ) - days ( 4L ),
+      expr = paste0( round( dataGenLoadRT()[ AggregateType == "Nuclear" & DateTime > ymd( today() ) - days ( 4L ),
                                      sum( GenerationValue ) ] / 1000000L, digits = 1L ), " TW" ) } )
     output$nuclearPerc <- renderText( {
-      expr = paste0( round( dataGenRT()[ AggregateType == "Nuclear" & DateTime > ymd( today() ) - days ( 4L ),
-                                     sum( GenerationValue ) ] / sum( dataGenRT()[DateTime > ymd( today() ) - days ( 4L )]$GenerationValue, na.rm = TRUE ) * 100L, digits = 1L ) ) } )
+      expr = paste0( round( dataGenLoadRT()[ AggregateType == "Nuclear" & DateTime > ymd( today() ) - days ( 4L ),
+                                     sum( GenerationValue ) ] / sum( dataGenLoadRT()[DateTime > ymd( today() ) - days ( 4L )]$GenerationValue, na.rm = TRUE ) * 100L, digits = 1L ) ) } )
+    
+    
+    ######################################################################
+    #####                DATA TABLE                                  #####
+    ######################################################################
     
     output$GermanyData <- renderDataTable( {
       
-      datatable( Germany[ i = ,
+      datatable( dataGenLoadRT()[ i = ,
                           j = .( DateTime, TotalLoad, GenerationType, GenerationValue ) ],
                  options  = list( dom = "t" ), 
                  filter   = list( position = "top" ),
                  rownames = FALSE,
                  style    = "bootstrap" ) } )
     
-    # 
-    # importData <- reactive( {
-    #   
-    # })
 
+    
+    ######################################################################
+    #####                EXPORT / IMPORT SANKEY                      #####
+    ######################################################################
+    
+    # Imports
     importData <- reactive ( {
-      if ( input$dropdown12 == "Germany" ) {
-        hello <- eximp[ i  = InAreaName == "Germany",
-                        j  = .( Value = abs( sum( FlowValue ) ) ),
-                        by = c( "OutAreaName", "InAreaName" ) ]
-      } else if ( input$dropdown12 == "France" ) {
-        hello <- eximp[ i  = InAreaName == "Germany",
-                        j  = .( Value = abs( sum( FlowValue ) ) ),
-                        by = c( "OutAreaName", "InAreaName" ) ]
-      }
-      return( hello )
-    } )
+      if ( input$dropdown12 == "Germany" ) 
+        { hello <- eximp[ i  = InAreaName == "Germany",
+                          j  = .( Value = abs( sum( FlowValue ) ) ),
+                          by = c( "OutAreaName", "InAreaName" ) ] } 
+      else if ( input$dropdown12 == "France" ) 
+        { hello <- eximp[ i  = InAreaName == "Germany",
+                          j  = .( Value = abs( sum( FlowValue ) ) ),
+                          by = c( "OutAreaName", "InAreaName" ) ] }
+      return( hello ) } )
+    
     output$import <- renderEcharts4r( {
       importData() %>% 
         e_charts() %>% 
@@ -402,22 +337,22 @@ shiny::shinyApp(
                   target    = InAreaName,
                   value     = Value,
                   lineStyle = list( color = "gradient" ) ) %>% 
-        e_color(pal1)%>% 
-        e_tooltip(trigger = "item" ) %>% 
+        e_color( pal1 ) %>% 
+        e_tooltip( trigger = "item" ) %>% 
         e_show_loading() } )
     
+    # Exports
     exportData <- reactive ( {
-      if ( input$dropdown12 == "Germany" ) {
-        hello <- eximp[ i  = OutAreaName == "Germany",
-                        j  = .( Value = abs( sum( FlowValue ) ) ),
-                        by = c( "OutAreaName", "InAreaName" ) ]
-      } else if ( input$dropdown12 == "France" ) {
-        hello <- eximp[ i  = OutAreaName == "Germany",
-                        j  = .( Value = abs( sum( FlowValue ) ) ),
-                        by = c( "OutAreaName", "InAreaName" ) ]
-      }
-      return( hello )
-    } )
+      if ( input$dropdown12 == "Germany" ) 
+        { hello <- eximp[ i  = OutAreaName == "Germany",
+                          j  = .( Value = abs( sum( FlowValue ) ) ),
+                          by = c( "OutAreaName", "InAreaName" ) ] }
+      else if ( input$dropdown12 == "France" ) 
+        { hello <- eximp[ i  = OutAreaName == "Germany",
+                          j  = .( Value = abs( sum( FlowValue ) ) ),
+                          by = c( "OutAreaName", "InAreaName" ) ] }
+      return( hello ) } )
+    
     output$export <- renderEcharts4r( {
       exportData() %>% 
         e_charts() %>% 
@@ -426,10 +361,13 @@ shiny::shinyApp(
                   value     = Value,
                   lineStyle = list( color = "gradient" ) ) %>% 
         e_color( pal1 ) %>% 
-        e_tooltip(trigger = "item" ) %>%
+        e_tooltip( trigger = "item" ) %>%
         e_show_loading() } )
     
     
+    ######################################################################
+    #####                EXPORT / IMPORT NETWORK                     #####
+    ######################################################################
     
     output$graph <- renderEcharts4r( {
       e_charts() %>% 
@@ -466,8 +404,7 @@ shiny::shinyApp(
         e_legend( orient   = "vertical",
                   right    = "0%",
                   top      = "center" ) %>% 
-        e_color( c("#5e72e4", "#5eb5e4", "#e45e72", "#8d5ee4" ) )
-    })
+        e_color( c("#5e72e4", "#5eb5e4", "#e45e72", "#8d5ee4" ) ) } )
     
     
     }
