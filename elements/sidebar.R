@@ -13,6 +13,11 @@ dashSidebar <- argonDashSidebar(
   
   argonSidebarMenu(
     argonSidebarHeader( title = "Main Menu" ),
+    
+    # argonSidebarItem( tabName = "Welcome",
+    #                   icon    = icon( name = "door-open" ),
+    #                   "Welcome!" ),
+    
     argonSidebarItem( tabName = "Generation",
                       icon    = icon( name = "plus-square" ),
                       "Generation" ),

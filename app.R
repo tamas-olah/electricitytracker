@@ -1,7 +1,7 @@
 library( shiny        )
 library( shinyWidgets )
 library( argonR       )
-library( argonDash    )
+library( argonDash    ) 
 library( fst          )
 library( data.table   )
 library( tidyverse    )
@@ -46,9 +46,8 @@ shiny::shinyApp(
     body        = argonDashBody( argonTabItems( generation_page,
                                                 demand_page,
                                                 exim_page,
-                                                data_page,
                                                 map_page,
-                                                # todo_page,
+                                                data_page,
                                                 about_page ) ),
     footer      = dashFooter ),
   
