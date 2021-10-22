@@ -1,7 +1,12 @@
+# devtools::install_github("tamas-olah/blueDash")
+# devtools::install_github("tamas-olah/blueR")
+
 library( shiny        )
 library( shinyWidgets )
-library( argonR       )
-library( argonDash    ) 
+# library( argonR       )
+# library( argonDash    )
+library( blueDash     )
+library( blueR        )
 library( fst          )
 library( data.table   )
 library( tidyverse    )
@@ -13,6 +18,14 @@ library( DT           )
 library( echarts4r    )
 library( googledrive  )
 library( stringi      )
+library( leaflet      )
+library( sf           )
+
+
+
+mapData <- read_fst( "data_static/map_data.fst" )
+mapData$value <- NULL
+mapDE <- read_sf("~/Desktop/germanymap/inputs/geofiles/nuts250_2018-12-31.utm32s.shape/nuts250/250_NUTS3.shp")
 
 # Google Drive authorization
 options( gargle_oauth_email = TRUE, gargle_oauth_cache = "electricitytracker/.secrets" )
@@ -30,12 +43,13 @@ lapply( X   = list.files( path = "pages", full.names = TRUE ),
 
 # Set design elements
 e_common( font_family = "Barlow" )
-pal1 <- c( "#5e72e4", "#5eb5e4", "#8d5ee4" )
+# pal1 <- c( "#36648b", "#648b36", "#8b5d36" )
+pal1 <- c("#36648b", "#94346E", "#5F4690","#1D6996","#38A6A5","#0F8554","#73AF48","#EDAD08","#E17C05","#CC503E","#6F4070","#994E95","#36648b")
 
 # App
 shiny::shinyApp(
   
-  ui = argonDashPage(
+  ui = blueDashPage(
     # chooseSliderSkin( skin = "Flat", color = "#6663e7" ),
     use_font("barlow", "www/css/barlow.css", css = "font-family: 'Barlow', sans-serif;"),
     title       = "Electricity tracker",
@@ -43,7 +57,7 @@ shiny::shinyApp(
     description = NULL,
     sidebar     = dashSidebar,
     header      = dashHeader,
-    body        = argonDashBody( argonTabItems( generation_page,
+    body        = blueDashBody( blueTabItems( generation_page,
                                                 demand_page,
                                                 exim_page,
                                                 map_page,
@@ -405,6 +419,37 @@ shiny::shinyApp(
                   top      = "center" ) %>% 
         e_color( c("#5e72e4", "#5eb5e4", "#e45e72", "#8d5ee4" ) ) } )
     
+
+    # boundingBox <- reactive ( {
+    #   if ( input$dropdown12 == "Germany" )
+    #   { boundingBox <- c(5.98865807458, 47.3024876979, 15.0169958839, 54.983104153) }
+    #   else if ( input$dropdown12 == "France" )
+    #   { boundingBox <- c( -5.22, 41.33, 9.55, 51.2 ) }
+    #   return( boundingBox ) } )
+
+    output$Explorer_Map <- renderLeaflet({
+      leaflet() %>%
+        fitBounds(5.98865807458, 47.3024876979, 15.0169958839, 54.983104153) %>% 
+        addTiles() %>%  
+        addProviderTiles(providers$CartoDB.Positron)
+      })
+
+    # leafletProxy("Explorer_Map") %>% 
+    #   clearGroup("Links") %>% 
+    #   clearGroup("HEX") %>%
+    #   clearGroup("Selected_Links") %>% 
+    #   removeControl("HEXLegend") %>%
+    #   removeControl("Links_Legend") %>%
+    #   
+    #   addPolylines(data=arrange(Data_to_Display_Dual_Direction(),Passengers),
+    #                group = "Links",
+    #                label = ~paste0(stri_trans_general(First_Location, id = "Title")," to/from ",stri_trans_general(Second_Location, id = "Title"),": ",Passengers," Trip(s)"),
+    #                color = ~dirPal(Passengers),
+    #                opacity = 1,
+    #                weight = ~sqrt(scale(Passengers,center = -10, log10(max(Passengers))))/2,
+    #                highlightOptions = highlightOptions(color = "Black",weight = 4, bringToFront = F, opacity = 1),
+    #                options = pathOptions(pane = "Links_All")) %>% 
+    #   leafl
     
     }
   )
