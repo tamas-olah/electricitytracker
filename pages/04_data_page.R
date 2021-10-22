@@ -1,8 +1,8 @@
-data_page <- argonTabItem(
+data_page <- blueTabItem(
   
   tabName = "Data",
   
-  argonCard(
+  blueCard(
     
     width        = 12L,
     src          = NULL,
@@ -14,9 +14,9 @@ data_page <- argonTabItem(
     title        = "Data",
     "🚧 Under construction 🚧",
     
-    argonRow(
+    blueRow(
       
-      argonColumn(
+      blueColumn(
         
         width = 6L,
         dataTableOutput( "GermanyData" )

@@ -1,8 +1,8 @@
-# todo_page <- argonTabItem(
+# todo_page <- blueTabItem(
 #   
 #   tabName = "Todo",
 #   
-#   argonCard(
+#   blueCard(
 #     
 #     width        = 12L,
 #     src          = NULL,
@@ -13,9 +13,9 @@
 #     hover_shadow = TRUE,
 #     title        = "To-do",
 #     
-#     argonRow(
+#     blueRow(
 #       
-#       argonColumn(
+#       blueColumn(
 #         
 #         width = 6L,
 #         "🚧 Under construction 🚧"

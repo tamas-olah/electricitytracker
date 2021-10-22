@@ -1,4 +1,4 @@
-dashSidebar <- argonDashSidebar(
+dashSidebar <- blueDashSidebar(
   
   vertical   = TRUE,
   skin       = "light",
@@ -7,51 +7,51 @@ dashSidebar <- argonDashSidebar(
   side       = "left",
   id         = "my_sidebar",
   brand_url  = NULL,
-  brand_logo = "https://i.ibb.co/2cqRGpy/trackerlogo2.png",
+  brand_logo = "https://i.ibb.co/4Y3Kt0n/trackerlogo3.png",
   
+
   
-  
-  argonSidebarMenu(
-    argonSidebarHeader( title = "Main Menu" ),
+  blueSidebarMenu(
+    blueSidebarHeader( title = "Main Menu" ),
     
-    # argonSidebarItem( tabName = "Welcome",
+    # blueSidebarItem( tabName = "Welcome",
     #                   icon    = icon( name = "door-open" ),
     #                   "Welcome!" ),
     
-    argonSidebarItem( tabName = "Generation",
+    blueSidebarItem( tabName = "Generation",
                       icon    = icon( name = "plus-square" ),
                       "Generation" ),
     
-    argonSidebarItem( tabName = "Demand",
+    blueSidebarItem( tabName = "Demand",
                       icon    = icon( name = "minus-square" ),
                       "Demand" ),
     
-    argonSidebarItem( tabName = "Exim",
+    blueSidebarItem( tabName = "Exim",
                       icon    = icon( name = "exchange-alt" ),
                       "Export/import" ),
     
-    argonSidebarItem( tabName = "Map",
+    blueSidebarItem( tabName = "Map",
                       icon    = icon( name = "map" ),
                       "Map" ),
     
-    argonSidebarItem( tabName = "Data",
+    blueSidebarItem( tabName = "Data",
                       icon    = icon( name = "database" ),
                       "Data" ),
     
-    # argonSidebarItem( tabName = "Todo",
+    # blueSidebarItem( tabName = "Todo",
     #                   icon    = icon( name = "tasks" ),
     #                   "To-do" ),
     
-    argonSidebarItem( tabName = "About",
+    blueSidebarItem( tabName = "About",
                       icon    = icon( name = "address-card" ),
                       "About" )
     
     ),
   br(), br(),
-  # argonSidebarDivider(),
-  argonSidebarMenu(
-    argonSidebarHeader( title = "Inputs"),
-    argonSidebarItem( tabName = "Country",
+  # blueSidebarDivider(),
+  blueSidebarMenu(
+    blueSidebarHeader( title = "Inputs"),
+    blueSidebarItem( tabName = "Country",
                       icon    = icon( name = "flag" ),
                       "Country",
                       br(),

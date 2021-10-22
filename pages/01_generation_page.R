@@ -1,14 +1,14 @@
-generation_page <- argonTabItem(
+generation_page <- blueTabItem(
   
   tabName = "Generation",
   
-  argonRow(
+  blueRow(
     
-    argonColumn(
+    blueColumn(
       
       width = 12L,
       
-      argonTabSet(
+      blueTabSet(
         
         id           = "tabGeneration",
         card_wrapper = FALSE,
@@ -17,16 +17,16 @@ generation_page <- argonTabItem(
         size         = "sm",
         width        = 12L,
         iconList     = lapply( X   = list( "pin-3", "sound-wave", "curved-next"),
-                               FUN = argonIcon ),
+                               FUN = blueIcon ),
         
-        argonTab(
+        blueTab(
           
           tabName = "Real-time",
           active  = TRUE,
           
-          argonRow(
+          blueRow(
             
-            argonInfoCardTO(
+            blueInfoCardTO(
               
               value            = textOutput( "windGen" ), 
               title            = "WIND", 
@@ -40,7 +40,7 @@ generation_page <- argonTabItem(
               gradient         = TRUE
               ),
             
-            argonInfoCardTO(
+            blueInfoCardTO(
               
               value            = textOutput( "solarGen" ), 
               title            = "SOLAR", 
@@ -54,7 +54,7 @@ generation_page <- argonTabItem(
               gradient         = TRUE
             ),
             
-            argonInfoCardTO(
+            blueInfoCardTO(
               value            = textOutput( "fossilGen" ), 
               title            = "FOSSIL", 
               stat             = textOutput( "fossilPerc" ), 
@@ -67,7 +67,7 @@ generation_page <- argonTabItem(
               gradient         = TRUE
             ),
             
-            argonInfoCardTO(
+            blueInfoCardTO(
               value            = textOutput( "nuclearGen" ), 
               title            = "NUCLEAR", 
               stat             = textOutput( "nuclearPerc" ), 
@@ -83,9 +83,9 @@ generation_page <- argonTabItem(
           
           br(),
           
-          argonRow(
+          blueRow(
             
-            argonCard(
+            blueCard(
               
               width = 12L,
               
@@ -94,12 +94,12 @@ generation_page <- argonTabItem(
             )
           ),
         
-        argonTab(
+        blueTab(
           
           tabName = "Long-term",
           active  = FALSE,
           
-          argonCard(
+          blueCard(
             
             width        = 12L,
             src          = NULL,
@@ -110,9 +110,9 @@ generation_page <- argonTabItem(
             hover_shadow = TRUE,
             title        = "Long-term",
             
-            argonRow(
+            blueRow(
               
-              argonColumn(
+              blueColumn(
                 
                 width = 6L,
                 "🚧 Under construction 🚧"
@@ -121,20 +121,20 @@ generation_page <- argonTabItem(
             )
           ),
         
-        argonTab(
+        blueTab(
           
           tabName = "Forecast",
           active  = FALSE,
           
-          argonRow(
+          blueRow(
             
-            argonColumn(
+            blueColumn(
               
               width = 12L,
               
-              argonRow(
+              blueRow(
                 
-                argonCard(
+                blueCard(
                   
                   width        = 12L,
                   src          = NULL,
@@ -149,9 +149,9 @@ generation_page <- argonTabItem(
                   )
                 ),
               
-              argonRow(
+              blueRow(
                 
-                argonCard(
+                blueCard(
                   
                   width        = 12L,
                   src          = NULL,

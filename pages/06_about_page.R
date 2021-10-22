@@ -1,16 +1,16 @@
-about_page <- argonTabItem(
+about_page <- blueTabItem(
   
   tabName = "About",
   
   br(),br(),
   
-  argonRow(
+  blueRow(
     
-    argonColumn(
+    blueColumn(
       
       width      = 12L,
       
-      argonProfileTO(
+      blueProfileTO(
         
         title    = "Tamas Olah",
         subtitle = "Budapest, Hungary",
@@ -18,7 +18,7 @@ about_page <- argonTabItem(
         url      = NULL,
         url_1    = "https://www.linkedin.com/in/tamasolah/",
         url_2    = "https://github.com/tamas-olah",
-        stats    = argonProfileStats(),
+        stats    = blueProfileStats(),
         "",
         img(src = "doge.png", height = 500, width = 500)
         )

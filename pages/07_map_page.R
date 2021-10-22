@@ -1,11 +1,11 @@
-map_page <- argonTabItem(
+map_page <- blueTabItem(
 
   tabName = "Map",
   
-  argonRow(
+  blueRow(
     br(),
     "🚧 Under construction 🚧",
-    br(), br()
+    br(), br(),
     
   # map_data %>%
   #   e_charts(lon) %>%
@@ -13,7 +13,10 @@ map_page <- argonTabItem(
   #   e_leaflet_tile() %>%
   #   e_scatter(lat, size = value, coord_system = "leaflet")
   
-  # map_dat
+
+  
+  leafletOutput("Explorer_Map", height = "600px")
+    # Print the map
   
   # map_data %>%
   #   e_charts(lon) %>%

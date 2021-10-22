@@ -278,9 +278,9 @@ theme_map <- function(...) {
 
 
 
-######## custom argon functions #########
+######## custom blue functions #########
 
-argonProfileTO  <- function ( ..., title = NULL, subtitle = NULL, src = NULL, 
+blueProfileTO  <- function ( ..., title = NULL, subtitle = NULL, src = NULL, 
                               url = NULL, url_1 = NULL, url_2 = NULL, stats ) {
   htmltools::tags$div(class = "card card-profile shadow", 
                       htmltools::tags$div(class = "px-4", htmltools::tags$div(class = "row justify-content-center", 
@@ -303,7 +303,7 @@ argonProfileTO  <- function ( ..., title = NULL, subtitle = NULL, src = NULL,
 }
 
 
-argonInfoCardTO <- function ( value, title = NULL, stat = NULL, stat_icon = NULL, 
+blueInfoCardTO <- function ( value, title = NULL, stat = NULL, stat_icon = NULL, 
                               description = NULL, icon, icon_background = "default", 
                               hover_lift = FALSE, shadow = FALSE, background_color = NULL, 
                               gradient = FALSE, width = 3 ) {
@@ -329,7 +329,7 @@ argonInfoCardTO <- function ( value, title = NULL, stat = NULL, stat_icon = NULL
   else text_color <- NULL
   else text_color <- NULL
   infoCardTag <- shiny::tags$div(class = cardCl, shiny::tags$div(class = "card-body", 
-                                                                 shiny::fluidRow(argonR::argonColumn(shiny::tags$h5(class = paste0("card-title text-uppercase mb-0 ", 
+                                                                 shiny::fluidRow(blueR::blueColumn(shiny::tags$h5(class = paste0("card-title text-uppercase mb-0 ", 
                                                                                                                                    "text-gray"), title), shiny::span(class = paste0("h2 font-weight-bold mb-0 ", 
                                                                                                                                                                                         text_color), value)), shiny::tags$div(class = "col-auto", 
                                                                                                                                                                                                                          shiny::tags$div(class = iconCl, icon))), shiny::fluidRow(class = "mx-2 mt-3 mb-0 text-sm", 
@@ -339,7 +339,7 @@ argonInfoCardTO <- function ( value, title = NULL, stat = NULL, stat_icon = NULL
                                                                                                                                                                                                                                                                                                                               class = "mr-2"))
                                                                                                                                                                                                                                                                                   }, shiny::span(class = paste0("mt-0 h5 ", "text-gray"), 
                                                                                                                                                                                                                                                                                                  description))))
-  argonR::argonColumn(width = width, infoCardTag)
+  blueR::blueColumn(width = width, infoCardTag)
 }
 
 ######## misc #########

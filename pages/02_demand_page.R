@@ -1,14 +1,14 @@
-demand_page <- argonTabItem(
+demand_page <- blueTabItem(
   
   tabName = "Demand",
   
-  argonRow(
+  blueRow(
   
-    argonColumn(
+    blueColumn(
       
       width = 12L,
       
-      argonTabSet(
+      blueTabSet(
         
         id           = "tabDemand",
         card_wrapper = FALSE,
@@ -17,23 +17,23 @@ demand_page <- argonTabItem(
         size         = "sm",
         width        = 12L,
         iconList     = lapply( X   = list( "pin-3", "sound-wave", "curved-next"),
-                               FUN = argonIcon ),
+                               FUN = blueIcon ),
 
-        argonTab(
+        blueTab(
           
           tabName = "Real-time",
           active  = TRUE,
           
-          # argonCard(
+          # blueCard(
           #   
           #   title  = "Inputs",
           #   width  = 12L,
           #   icon   = icon( "cogs" ),
           #   status = "default",
           #   
-          #   argonRow(
+          #   blueRow(
           #   
-          #     argonColumn(
+          #     blueColumn(
           #       
           #       width = 2L,
           #       tags$style( type='text/css', ".selectize-input { font-size: 12px; line-height: 22px;} .selectize-dropdown { font-size: 12px; line-height: 28px; }" ),
@@ -43,9 +43,9 @@ demand_page <- argonTabItem(
           #                                 "France"  = "France" ) )
           #       ),
           #     
-          #     argonColumn( width = 1L ),
+          #     blueColumn( width = 1L ),
           #     
-          #     argonColumn(
+          #     blueColumn(
           #       
           #       width = 9L,
           #       
@@ -64,19 +64,19 @@ demand_page <- argonTabItem(
           #     )
           #   ),
           
-          argonRow(
+          blueRow(
             
-            argonColumn(
+            blueColumn(
               
               width = 12L,
               
-              argonRow(
+              blueRow(
               
-              argonCard(
+              blueCard(
                 
                 title = NULL, #"real-time demand",
                 width = 12L,
-                icon  = NULL, #argonIcon( "pin-3" ),
+                icon  = NULL, #blueIcon( "pin-3" ),
                 shadow = TRUE,
                 # sliderInput(
                 #   
@@ -92,13 +92,13 @@ demand_page <- argonTabItem(
                 
                 echarts4rOutput( "demandRT" ),
                 br(),
-                argonButton( name         = "Click me",
+                blueButton( name         = "Click me",
                              status       = "danger",
                              icon         = icon("bell"),
                              size         = "sm",
                              toggle_modal = TRUE,
                              modal_id     = "modal1" ),
-                argonModal( id       = "modal1",
+                blueModal( id       = "modal1",
                             title    = "What is “residual load”?",
                             status   = "default",
                             gradient = TRUE,
@@ -109,35 +109,35 @@ demand_page <- argonTabItem(
             )
           ),
         
-        argonTab(
+        blueTab(
           
           tabName = "Long-term",
           active  = FALSE,
           
-          argonRow(
+          blueRow(
             
-            argonColumn(
+            blueColumn(
               
               width = 12L,
               
-              argonRow(
+              blueRow(
               
-              argonCard(
+              blueCard(
                 
                 title = NULL, #"Long-term demand curve",
                 width = 12L,
-                icon  = NULL, #argonIcon("sound-wave"),
+                icon  = NULL, #blueIcon("sound-wave"),
                 shadow = TRUE,
                 # plotlyOutput( "demandOverlay", height = "470px", width = "100%" ),
                 echarts4rOutput( "demandOverlay2", height = "470px", width = "100%" ),
                 br(),
-                argonButton( name         = "Click me",
+                blueButton( name         = "Click me",
                              status       = "danger",
                              icon         = icon("bell"),
                              size         = "sm",
                              toggle_modal = TRUE,
                              modal_id     = "modal2" ),
-                argonModal( id       = "modal2",
+                blueModal( id       = "modal2",
                             title    = "What is “long term demand curve”?",
                             status   = "default",
                             gradient = TRUE,
@@ -146,11 +146,11 @@ demand_page <- argonTabItem(
                 )
               ) )
             
-            # argonColumn(
+            # blueColumn(
             #   
             #   width = 3L,
             #   
-            #   argonCard(
+            #   blueCard(
             #     
             #     title            = "Inputs",
             #     width            = 12L,
@@ -176,21 +176,21 @@ demand_page <- argonTabItem(
             )
           ),
         
-        argonTab(
+        blueTab(
           
           tabName = "Forecast",
           active  = FALSE,
           
-          argonRow(
+          blueRow(
             
-            argonColumn(
+            blueColumn(
               
               width  = 12L,
               height = "200px",
               
-              argonRow(
+              blueRow(
                 
-                argonCard(
+                blueCard(
                   
                   width        = 12L,
                   src          = NULL,
@@ -205,11 +205,11 @@ demand_page <- argonTabItem(
                 )
               )
             
-            # argonColumn(
+            # blueColumn(
             #   
             #   width = 3L,
             #   
-            #   argonCard(
+            #   blueCard(
             #     
             #     title            = "Inputs",
             #     width            = 12L,
@@ -235,9 +235,9 @@ demand_page <- argonTabItem(
             #   )
             ),
           
-          argonRow(
+          blueRow(
             
-            argonCard(
+            blueCard(
               
               width        = 12L,
               src          = NULL,

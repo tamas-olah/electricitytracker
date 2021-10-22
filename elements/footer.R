@@ -1,11 +1,11 @@
-dashFooter <- argonDashFooter(
+dashFooter <- blueDashFooter(
   
   copyrights = "Created by Tamas Olah in 2021",
   src        = NULL,
   
-  argonFooterMenu(
+  blueFooterMenu(
 
-    argonFooterItem( h6( p( "Last data refresh: ",
+    blueFooterItem( h6( p( "Last data refresh: ",
                             textOutput( "updateDate", inline = TRUE ) ) ) )
     )
   )

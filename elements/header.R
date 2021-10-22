@@ -1,6 +1,6 @@
-dashHeader <- argonDashHeader(
+dashHeader <- blueDashHeader(
   
-  gradient        = TRUE,
+  gradient        = FALSE,
   color           = "primary",
   separator       = TRUE,
   separator_color = "secondary",

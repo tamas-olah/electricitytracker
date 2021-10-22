@@ -1,8 +1,8 @@
-# about_page <- argonTabItem(
+# about_page <- blueTabItem(
 #   
 #   tabName = "Welcome",
 #   
-#   argonCard(
+#   blueCard(
 #     
 #     width        = 12L,
 #     src          = NULL,

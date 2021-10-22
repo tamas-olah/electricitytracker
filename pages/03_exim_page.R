@@ -1,14 +1,14 @@
-exim_page <- argonTabItem(
+exim_page <- blueTabItem(
   
   tabName = "Exim",
   
-  argonRow(
+  blueRow(
 
-    argonColumn(
+    blueColumn(
 
       width = 12L,
 
-      argonTabSet(
+      blueTabSet(
 
         id           = "tabExim",
         card_wrapper = FALSE,
@@ -19,20 +19,20 @@ exim_page <- argonTabItem(
         iconList     = lapply( X   = list( "network-wired", "exchange-alt" ),
                                FUN = icon ),
 
-        argonTab(
+        blueTab(
 
           tabName = "Graph",
           active  = TRUE,
 
-          argonRow(
+          blueRow(
 
-            argonColumn(
+            blueColumn(
 
               width = 12L,
 
-              argonRow(
+              blueRow(
 
-                argonCard(
+                blueCard(
 
                   width        = 12L,
                   src          = NULL,
@@ -47,14 +47,14 @@ exim_page <- argonTabItem(
 
                   br(),
 
-                  argonButton( name         = "Click me",
+                  blueButton( name         = "Click me",
                                status       = "danger",
                                icon         = icon("bell"),
                                size         = "sm",
                                toggle_modal = TRUE,
                                modal_id     = "modalGraph" ),
 
-                  argonModal( id       = "modalGraph",
+                  blueModal( id       = "modalGraph",
                               title    = "What is this?",
                               status   = "default",
                               gradient = TRUE,
@@ -65,29 +65,29 @@ exim_page <- argonTabItem(
             )
           ),
 
-        argonTab(
+        blueTab(
 
           tabName = "Sankey",
           active  = FALSE,
 
-          argonRow(
+          blueRow(
 
-            argonColumn(
+            blueColumn(
 
               width = 12L,
 
-              argonRow(
+              blueRow(
 
-                argonCard(
+                blueCard(
 
                   title  = NULL,
                   width  = 12L,
                   icon   = NULL,
                   shadow = TRUE,
 
-                  argonRow(
+                  blueRow(
 
-                    argonColumn(
+                    blueColumn(
 
                       width = 6L,
 
@@ -95,21 +95,21 @@ exim_page <- argonTabItem(
 
                       br(),
 
-                      argonButton( name         = "Click me",
+                      blueButton( name         = "Click me",
                                    status       = "danger",
                                    icon         = icon("bell"),
                                    size         = "sm",
                                    toggle_modal = TRUE,
                                    modal_id     = "modalSankey" ),
 
-                      argonModal( id       = "modalSankey",
+                      blueModal( id       = "modalSankey",
                                   title    = "What is this?",
                                   status   = "default",
                                   gradient = TRUE,
                                   "" )
                       ),
 
-                    argonColumn(
+                    blueColumn(
 
                       width = 6L,
 
