@@ -19,8 +19,7 @@ about_page <- blueTabItem(
         url_1    = "https://www.linkedin.com/in/tamasolah/",
         url_2    = "https://github.com/tamas-olah",
         stats    = blueProfileStats(),
-        "",
-        img(src = "doge.png", height = 500, width = 500)
+        ""
         )
       )
     )

@@ -16,7 +16,7 @@ generation_page <- blueTabItem(
         circle       = FALSE,
         size         = "sm",
         width        = 12L,
-        iconList     = lapply( X   = list( "pin-3", "sound-wave", "curved-next"),
+        iconList     = lapply( X   = list( "pin-3", "curved-next", "sound-wave"),
                                FUN = blueIcon ),
         
         blueTab(
@@ -27,7 +27,6 @@ generation_page <- blueTabItem(
           blueRow(
             
             blueInfoCardTO(
-              
               value            = textOutput( "windGen" ), 
               title            = "WIND", 
               stat             = textOutput( "windPerc" ), 
@@ -37,11 +36,9 @@ generation_page <- blueTabItem(
               icon_background  = "primary",
               hover_lift       = FALSE,
               shadow           = TRUE,
-              gradient         = TRUE
-              ),
+              gradient         = TRUE ),
             
             blueInfoCardTO(
-              
               value            = textOutput( "solarGen" ), 
               title            = "SOLAR", 
               stat             = textOutput( "solarPerc" ), 
@@ -51,8 +48,7 @@ generation_page <- blueTabItem(
               icon_background  = "primary",
               hover_lift       = FALSE,
               shadow           = TRUE,
-              gradient         = TRUE
-            ),
+              gradient         = TRUE ),
             
             blueInfoCardTO(
               value            = textOutput( "fossilGen" ), 
@@ -64,8 +60,7 @@ generation_page <- blueTabItem(
               icon_background  = "primary",
               hover_lift       = FALSE,
               shadow           = TRUE,
-              gradient         = TRUE
-            ),
+              gradient         = TRUE ),
             
             blueInfoCardTO(
               value            = textOutput( "nuclearGen" ), 
@@ -77,11 +72,21 @@ generation_page <- blueTabItem(
               icon_background  = "primary",
               hover_lift       = FALSE,
               shadow           = TRUE,
-              gradient         = TRUE
-              )
+              gradient         = TRUE )
             ),
           
           br(),
+          
+          blueRow( blueColumn(sliderTextInput( inputId = "genslider",
+                                    label   = NULL,
+                                    width = "100%",
+                                    choices = seq.Date( from = today() - days( 20L ),
+                                                        to   = today() + days( 1 ),
+                                                        by   = "day" ),
+                                    selected = c( today() - days( 2L ), today() + days( 1 ) ),
+                                    grid = TRUE
+                                    )
+          )),
           
           blueRow(
             
@@ -90,33 +95,7 @@ generation_page <- blueTabItem(
               width = 12L,
               
               echarts4rOutput( "generationRT", height = "580px" )
-              )
-            )
-          ),
-        
-        blueTab(
-          
-          tabName = "Long-term",
-          active  = FALSE,
-          
-          blueCard(
-            
-            width        = 12L,
-            src          = NULL,
-            icon         = icon( "cogs" ),
-            status       = "default",
-            shadow       = TRUE,
-            border_level = 8L,
-            hover_shadow = TRUE,
-            title        = "Long-term",
-            
-            blueRow(
               
-              blueColumn(
-                
-                width = 6L,
-                "🚧 Under construction 🚧"
-                )
               )
             )
           ),
@@ -146,8 +125,8 @@ generation_page <- blueTabItem(
                   title        = NULL,
                   
                   echarts4rOutput( "GenDAWSGerPlot", width = "100%")
-                  )
-                ),
+                )
+              ),
               
               blueRow(
                 
@@ -161,8 +140,37 @@ generation_page <- blueTabItem(
                   border_level = 8L,
                   hover_shadow = TRUE,
                   title        = NULL,
-                  echarts4rOutput( "GenDAGerPlot", width = "100%") 
-                  )
+                  
+                  echarts4rOutput( "GenDAGerPlot", width = "100%"),
+                  textOutput('legend_selected')
+                )
+              )
+            )
+          )
+        ),
+        
+        blueTab(
+          
+          tabName = "Long-term",
+          active  = FALSE,
+          
+          blueCard(
+            
+            width        = 12L,
+            src          = NULL,
+            icon         = icon( "cogs" ),
+            status       = "default",
+            shadow       = TRUE,
+            border_level = 8L,
+            hover_shadow = TRUE,
+            title        = "Long-term",
+            
+            blueRow(
+              
+              blueColumn(
+                
+                width = 6L,
+                "🚧 Under construction 🚧"
                 )
               )
             )

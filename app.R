@@ -20,12 +20,11 @@ library( googledrive  )
 library( stringi      )
 library( leaflet      )
 library( sf           )
+library( rcartocolor  )
 
 
 
-mapData <- read_fst( "data_static/map_data.fst" )
-mapData$value <- NULL
-mapDE <- read_sf("~/Desktop/germanymap/inputs/geofiles/nuts250_2018-12-31.utm32s.shape/nuts250/250_NUTS3.shp")
+# mapData <- read_fst( "data_static/map_data.fst" )
 
 # Google Drive authorization
 options( gargle_oauth_email = TRUE, gargle_oauth_cache = "electricitytracker/.secrets" )
@@ -44,35 +43,38 @@ lapply( X   = list.files( path = "pages", full.names = TRUE ),
 # Set design elements
 e_common( font_family = "Barlow" )
 # pal1 <- c( "#36648b", "#648b36", "#8b5d36" )
-pal1 <- c("#36648b", "#94346E", "#5F4690","#1D6996","#38A6A5","#0F8554","#73AF48","#EDAD08","#E17C05","#CC503E","#6F4070","#994E95","#36648b")
-
+# pal1 <- c("#36648b", "#94346E", "#5F4690","#1D6996","#38A6A5","#0F8554","#73AF48","#EDAD08","#E17C05","#CC503E","#6F4070","#994E95","#36648b")
+pal1 <- head(carto_pal( 5L, "Pastel"), -1L )
 # App
 shiny::shinyApp(
   
   ui = blueDashPage(
-    # chooseSliderSkin( skin = "Flat", color = "#6663e7" ),
-    use_font("barlow", "www/css/barlow.css", css = "font-family: 'Barlow', sans-serif;"),
+    
     title       = "Electricity tracker",
     author      = "Tamas",
     description = NULL,
     sidebar     = dashSidebar,
     header      = dashHeader,
-    body        = blueDashBody( blueTabItems( generation_page,
-                                                demand_page,
-                                                exim_page,
-                                                map_page,
-                                                data_page,
-                                                about_page ) ),
+    body        = blueDashBody(
+      use_font("barlow", "www/css/barlow.css", css = "font-family: 'Barlow', sans-serif;"),
+      setSliderColor( color = "#36648b", sliderId = 1L ),
+      chooseSliderSkin( skin = "Flat" ),
+      blueTabItems( generation_page,
+                    demand_page,
+                    exim_page,
+                    map_page,
+                    data_page,
+                    about_page ) ),
     footer      = dashFooter ),
   
   server = function( input, output ) {
     
     # Fetch files from Google Drive to local folder
-    lapply( X         = drive_find( pattern = "fst" )$name, 
+    lapply( X         = drive_find( pattern = "fst" )$name,
             FUN       = function( i ) { drive_download( file      = i,
                                                         path      = paste0( "data_dynamic/", i ),
                                                         overwrite = TRUE ) } )
-    
+
     # List fetched files in local folder
     fileList <- list.files( path = "data_dynamic", pattern = "*.fst", full.names = TRUE )
     
@@ -85,6 +87,11 @@ shiny::shinyApp(
                       FUN           = read_fst,
                       as.data.table = TRUE ), 
               envir = .GlobalEnv )
+    
+    setnames( x = Germany, old = "TotalLoad", new = "Total Demand")
+    setnames( x = Germany, old = "ResidualLoad", new = "Residual Demand")
+    setnames( x = France, old = "TotalLoad", new = "Total Demand")
+    setnames( x = France, old = "ResidualLoad", new = "Residual Demand")
     
     # Get time of last data refresh:
     # List files on Google Drive, get first row (any row would work), get the 
@@ -106,7 +113,7 @@ shiny::shinyApp(
       return( dataGenLoadRT ) } )
     
     output$generationRT <- renderEcharts4r( {
-      unique( dataGenLoadRT()[ i = DateTime > ymd( today() ) - days ( 4L ),
+      unique( dataGenLoadRT()[ i = DateTime %between% input$genslider,
                            j = .( DateTime, GenerationValue, GenerationType ) ] ) %>%
         group_by( GenerationType ) %>%
         e_charts( x = DateTime ) %>%
@@ -118,9 +125,9 @@ shiny::shinyApp(
                 stack  = "Total" ) %>% 
         e_grid( right = "31%" ) %>% 
         e_tooltip( trigger = "axis" ) %>% 
-        e_datazoom( type  = "slider",
-                    start = 50L, 
-                    end   = 100L ) %>% 
+        # e_datazoom( type  = "slider",
+        #             start = 50L, 
+        #             end   = 100L ) %>% 
         e_legend( orient   = "vertical",
                   right    = "0%",
                   top      = "center",
@@ -130,6 +137,10 @@ shiny::shinyApp(
                  subtext = "Total generation, MWh" ) %>% 
         e_show_loading()
         } )
+    
+        
+    
+    
     
     
     ######################################################################
@@ -153,7 +164,12 @@ shiny::shinyApp(
                  subtext = "Total generation, MWh" ) %>% 
         e_color( pal1 ) %>% 
         e_datazoom( type  = "inside" ) %>% 
-        e_show_loading() } )
+        e_show_loading()} )
+    
+    output$legend_selected <- renderText( { 
+      input$GenDAGerPlot_mouseover_data
+      } )
+    
     
     ######################################################################
     #####                GENERATION FORECAST WIND & SOLAR            #####
@@ -186,18 +202,18 @@ shiny::shinyApp(
     
     output$demandOverlay2 <- renderEcharts4r( {
       unique( dataGenLoadRT()[ i = ,
-                           j = .( TotalLoad, Date, Month, Hour ) ] ) %>% 
+                           j = .( `Total Demand`, Date, Month, Hour ) ] ) %>% 
         mutate( width = 0.01 ) %>% 
         group_by( Date, Month ) %>% 
         e_charts( x = Hour ) %>% 
-        e_line( serie  = TotalLoad,
+        e_line( serie  = `Total Demand`,
                 symbol = "none",
                 smooth = TRUE,
                 lineStyle = list( width = 0.5 ) ) %>% 
         e_legend( show = FALSE ) %>% 
         e_tooltip( trigger = "item" ) %>% 
         e_title( text    = "Long-term demand curve", 
-                 subtext = "Total demand, MWh" ) %>% 
+                 subtext = "Total demand, MW" ) %>% 
         e_datazoom( type  = "inside" ) %>% 
         e_add_nested( "lineStyle", width )%>% 
         e_show_loading() } )
@@ -209,12 +225,12 @@ shiny::shinyApp(
     
     output$demandRT <- renderEcharts4r( {
       unique( dataGenLoadRT()[ i = DateTime > ymd( today() ) - days ( 30 ),
-                           j = .( DateTime, TotalLoad, ResidualLoad ) ] ) %>%
+                           j = .( DateTime, `Total Demand`, `Residual Demand` ) ] ) %>%
         e_charts( x = DateTime ) %>% 
-        e_line( serie = TotalLoad, 
+        e_line( serie = `Total Demand`, 
                 symbol = "none",
                 smooth = TRUE ) %>% 
-        e_line( serie = ResidualLoad, smooth = TRUE, symbol = "none" ) %>%
+        e_line( serie = `Residual Demand`, smooth = TRUE, symbol = "none" ) %>%
         # e_mark_area( data = list( list(xAxis = "min", yAxis = "min"),
         #                           list(xAxis = "max", yAxis = "max") ) ) %>% 
         e_legend( right = "10%" ) %>% 
@@ -245,8 +261,8 @@ shiny::shinyApp(
         e_line( serie = LoadForecastDA, smooth = TRUE ) %>% 
         e_tooltip( trigger = "axis" ) %>% 
         e_legend( show = FALSE ) %>% 
-        e_title( text    = "Day-ahead forecast", 
-                 subtext = "Total demand, MWh" ) %>% 
+        e_title( text    = "Day-ahead demand forecast", 
+                 subtext = "Total demand, MW" ) %>% 
         e_color(pal1) %>% 
         e_datazoom( type  = "inside" )%>% 
         e_show_loading() } )
@@ -272,8 +288,8 @@ shiny::shinyApp(
                 smooth = TRUE ) %>% 
         e_tooltip( trigger = "axis" ) %>% 
         e_legend( right = "10%" ) %>% 
-        e_title( text    = "Week-ahead forecast", 
-                 subtext = "Total demand, MWh" ) %>% 
+        e_title( text    = "Week-ahead demand forecast", 
+                 subtext = "Total demand, MW" ) %>% 
         e_color(pal1) %>% 
         e_datazoom( type  = "inside" )%>% 
         e_show_loading() } )
@@ -284,32 +300,32 @@ shiny::shinyApp(
     ######################################################################
     
     output$windGen  <- renderText( {
-      expr = paste0( round( dataGenLoadRT()[ AggregateType == "Wind" & DateTime > ymd( today() ) - days ( 4L ),
-                                     sum( GenerationValue ) ] / 1000000L, digits = 1L ), " TW" ) } )
+      expr = paste0( round( dataGenLoadRT()[ AggregateType == "Wind" & DateTime %between% input$genslider,
+                                     sum( GenerationValue ) ] / 1000000L, digits = 1L ), " TWh" ) } )
     output$windPerc <- renderText( {
-      expr = paste0( round( dataGenLoadRT()[ AggregateType == "Wind" & DateTime > ymd( today() ) - days ( 4L ),
-                                     sum( GenerationValue ) ] / sum( dataGenLoadRT()[DateTime > ymd( today() ) - days ( 4L )]$GenerationValue, na.rm = TRUE ) * 100L, digits = 1L ) ) } )
+      expr = paste0( round( dataGenLoadRT()[ AggregateType == "Wind" & DateTime %between% input$genslider,
+                                     sum( GenerationValue ) ] / sum( dataGenLoadRT()[DateTime %between% input$genslider]$GenerationValue, na.rm = TRUE ) * 100L, digits = 1L ) ) } )
     
     output$solarGen  <- renderText( {
-      expr = paste0( round( dataGenLoadRT()[ AggregateType == "Solar" & DateTime > ymd( today() ) - days ( 4L ),
-                                     sum( GenerationValue ) ] / 1000000L, digits = 1L ), " TW" ) } )
+      expr = paste0( round( dataGenLoadRT()[ AggregateType == "Solar" & DateTime %between% input$genslider,
+                                     sum( GenerationValue ) ] / 1000000L, digits = 1L ), " TWh" ) } )
     output$solarPerc <- renderText( {
-      expr = paste0( round( dataGenLoadRT()[ AggregateType == "Solar" & DateTime > ymd( today() ) - days ( 4L ),
-                                     sum( GenerationValue ) ] / sum( dataGenLoadRT()[DateTime > ymd( today() ) - days ( 4L )]$GenerationValue, na.rm = TRUE ) * 100L, digits = 1L ) ) } )
+      expr = paste0( round( dataGenLoadRT()[ AggregateType == "Solar" & DateTime %between% input$genslider,
+                                     sum( GenerationValue ) ] / sum( dataGenLoadRT()[DateTime %between% input$genslider]$GenerationValue, na.rm = TRUE ) * 100L, digits = 1L ) ) } )
 
     output$fossilGen  <- renderText( {
-      expr = paste0( round( dataGenLoadRT()[ AggregateType == "Fossil" & DateTime > ymd( today() ) - days ( 4L ),
-                                     sum( GenerationValue ) ] / 1000000L, digits = 1L ), " TW" ) } )
+      expr = paste0( round( dataGenLoadRT()[ AggregateType == "Fossil" & DateTime %between% input$genslider,
+                                     sum( GenerationValue ) ] / 1000000L, digits = 1L ), " TWh" ) } )
     output$fossilPerc <- renderText( {
-      expr = paste0( round( dataGenLoadRT()[ AggregateType == "Fossil" & DateTime > ymd( today() ) - days ( 4L ),
-                                     sum( GenerationValue ) ] / sum( dataGenLoadRT()[DateTime > ymd( today() ) - days ( 4L )]$GenerationValue, na.rm = TRUE ) * 100L, digits = 1L ) ) } )
+      expr = paste0( round( dataGenLoadRT()[ AggregateType == "Fossil" & DateTime %between% input$genslider,
+                                     sum( GenerationValue ) ] / sum( dataGenLoadRT()[DateTime %between% input$genslider]$GenerationValue, na.rm = TRUE ) * 100L, digits = 1L ) ) } )
 
     output$nuclearGen <- renderText( {
-      expr = paste0( round( dataGenLoadRT()[ AggregateType == "Nuclear" & DateTime > ymd( today() ) - days ( 4L ),
-                                     sum( GenerationValue ) ] / 1000000L, digits = 1L ), " TW" ) } )
+      expr = paste0( round( dataGenLoadRT()[ AggregateType == "Nuclear" & DateTime %between% input$genslider,
+                                     sum( GenerationValue ) ] / 1000000L, digits = 1L ), " TWh" ) } )
     output$nuclearPerc <- renderText( {
-      expr = paste0( round( dataGenLoadRT()[ AggregateType == "Nuclear" & DateTime > ymd( today() ) - days ( 4L ),
-                                     sum( GenerationValue ) ] / sum( dataGenLoadRT()[DateTime > ymd( today() ) - days ( 4L )]$GenerationValue, na.rm = TRUE ) * 100L, digits = 1L ) ) } )
+      expr = paste0( round( dataGenLoadRT()[ AggregateType == "Nuclear" & DateTime %between% input$genslider,
+                                     sum( GenerationValue ) ] / sum( dataGenLoadRT()[DateTime %between% input$genslider]$GenerationValue, na.rm = TRUE ) * 100L, digits = 1L ) ) } )
     
     
     ######################################################################
@@ -319,7 +335,7 @@ shiny::shinyApp(
     output$GermanyData <- renderDataTable( {
       
       datatable( dataGenLoadRT()[ i = ,
-                          j = .( DateTime, TotalLoad, GenerationType, GenerationValue ) ],
+                          j = .( DateTime, `Total Demand`, GenerationType, GenerationValue ) ],
                  options  = list( dom = "t" ), 
                  filter   = list( position = "top" ),
                  rownames = FALSE,
@@ -417,7 +433,8 @@ shiny::shinyApp(
         e_legend( orient   = "vertical",
                   right    = "0%",
                   top      = "center" ) %>% 
-        e_color( c("#5e72e4", "#5eb5e4", "#e45e72", "#8d5ee4" ) ) } )
+        e_color( pal1 )
+      } )
     
 
     # boundingBox <- reactive ( {
