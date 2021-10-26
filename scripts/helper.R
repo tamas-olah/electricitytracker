@@ -1,3 +1,180 @@
+######## generation downloader #########
+
+downloadGenRT    <- function( eic_code, period_start, period_end ) {
+  # Call function from downloader script
+  genRT <- en_generation_agg_gen_per_type( eic          = eic_code,
+                                           period_start = period_start,
+                                           period_end   = period_end ) %>% setDT()
+  # Call function from here (for testing)
+  # genRT <- en_generation_agg_gen_per_type( eic          = "10Y1001A1001A83F",
+  #                                          period_start = ymd( today(), tz = "CET" ) - days( 1L ),
+  #                                          period_end   = ymd( today(), tz = "CET" ) + days( 1L ) ) %>% setDT()
+  
+  # Load EIC code dictionary
+  dict  <- en_generation_codes()
+  
+  # Merge data table with code dictionary
+  genRT <- merge( x     = genRT,
+                  y     = dict[ , c( "codes", "meaning" ) ],
+                  by.x  = "MktPSRType",
+                  by.y  = "codes",
+                  all.x = TRUE )
+  
+  # Remove not needed columns
+  genRT[ i = ,
+         j = ":=" ( MktPSRType                 = NULL, 
+                    quantity_Measure_Unit.name = NULL ) ]
+  
+  # Renam columns
+  colnames( genRT ) <- c( "InBiddingZone", "GenerationValue", "DateTime",
+                          "OutBiddingZone", "GenerationType" )
+  
+  # Set time zone
+  genRT$DateTime    <- with_tz( genRT$DateTime, tzone = "CET" )
+  
+  # Remove lines where OutBiddingZone variable has values AND GenerationType is Solar or Wind
+  # This is necessary because these values are duplicates
+  genRT <- genRT[ !( !is.na( OutBiddingZone ) & 
+                       GenerationType %in% list( "Solar", "Wind Onshore" ) ), ]
+  
+  # Change sign of GenerationValue where OutBiddingZone is not empty
+  # This is necessary because these lines denote  pumped storage consumption values
+  # On plots they should be denoted as negative (as the plant is not producing but consuming electricity)
+  genRT[ !is.na( OutBiddingZone ), GenerationValue := -GenerationValue, ]
+  
+  # Rename variable values to correspond to production or consumption
+  genRT[ !is.na( OutBiddingZone ) & GenerationType == "Hydro Pumped Storage", GenerationType := "Hydro Pumped Storage In", ]
+  genRT[  is.na( OutBiddingZone ) & GenerationType == "Hydro Pumped Storage", GenerationType := "Hydro Pumped Storage Out", ]
+  
+  # Remove and rename col since all values are now in one column (both positive and negative)
+  genRT$OutBiddingZone <- NULL
+  
+  setnames( x   = genRT,
+            old = "InBiddingZone",
+            new = "BiddingZone" )
+  
+  # Create new date and time variables for grouping by later
+  genRT[ i = ,
+         j = ":=" ( Date  = as.Date( DateTime, tz = "CET" ),
+                    Year  = as.factor( year( DateTime ) ),
+                    Month = as.factor( month( DateTime, label = TRUE ) ),
+                    Day   = as.factor( day( DateTime) ),
+                    Hour  = hour( DateTime) ) ]
+  
+  # Flooring DateTime variable to aggregate later
+  genRT[ i = ,
+         j = DateTime := floor_date( DateTime, unit = "hours" ) ]
+  
+  # Do hourly aggregation (mean, not sum, because we're converting MW to MWh)
+  genRT <- genRT[ i       = ,
+                  j       = lapply( X   = .SD,
+                                    FUN = mean ),
+                  by      = c( "DateTime", "BiddingZone", "Date", "Year", "Month", "Day", "Hour", "GenerationType" ),
+                  .SDcols = "GenerationValue" ]
+  
+  # Create aggregate types for display in Generation page on the dashboard
+  genRT[ GenerationType %in% c( "Wind Offshore", "Wind Onshore" ), 
+         AggregateType := "Wind" ]
+  
+  genRT[ GenerationType %in% c( "Solar" ), 
+         AggregateType := "Solar" ]
+  
+  genRT[ GenerationType %in% c( "Biomass", "Geothermal", "Hydro Pumped Storage Out", 
+                                "Hydro Run-of-river and poundage", "Hydro Water Reservoir", 
+                                "Marine", "Other renewable", "Waste" ), 
+         AggregateType := "Other renewables" ]
+  
+  genRT[ GenerationType %in% c( "Fossil Brown coal/Lignite", "Fossil Coal-derived gas", 
+                                "Fossil Gas", "Fossil Hard coal", "Fossil Oil", 
+                                "Fossil Oil shale", "Fossil Peat" ), 
+         AggregateType := "Fossil" ]
+  
+  genRT[ GenerationType %in% c( "Nuclear" ), 
+         AggregateType := "Nuclear" ]
+  
+  genRT[ GenerationType %in% c( "Other" ), 
+         AggregateType := "Other" ]
+  
+  # Calculate standard deviation of gfeneration values
+  # This is necessary because I will rank series on the plot by their standard deviation
+  dt <- genRT[ i  = , 
+               j  = .( stdev = sd( GenerationValue ) ), 
+               by = "GenerationType" ]
+  
+  dt <- dt[ i = ,
+            j = GenerationType := reorder( GenerationType, -stdev ) ]
+  
+  # Assign a factor level to each Generation type ranked by std dev
+  genRT$GenerationType <- factor( x       = genRT$GenerationType,
+                                  levels  = rev(levels( dt$GenerationType ) ) )
+  
+  genRT <- genRT %>% tidyr::fill( BiddingZone, .direction = "down" )
+  
+  # Round values
+  genRT$GenerationValue <- round( genRT$GenerationValue, digits = 0L )
+  
+  # Remove not needed columns
+  genRT[ i = ,
+         j = ":=" ( Date  = NULL, 
+                    Year  = NULL,
+                    Month = NULL,
+                    Day   = NULL,
+                    Hour  = NULL ) ]
+  
+  return( genRT )
+}
+
+downloadGenDA    <- function( eic_code, period_start, period_end ) {
+  genDA <- en_generation_day_ahead_agg_gen( eic          = eic_code,
+                                            period_start = period_start,
+                                            period_end   = period_end ) %>% setDT()
+  
+  # genDA <- en_generation_day_ahead_agg_gen( eic          = "10Y1001A1001A83F",
+  #                                           period_start = ymd( today(), tz = "CET" ),
+  #                                           period_end   = ymd( today(), tz = "CET" ) + days( 2L ) ) %>% setDT()
+  
+  colnames( genDA ) <- c( "BiddingZone", "Unit", "GenerationValue", "DateTime" )
+  
+  genDA$DateTime    <- with_tz( genDA$DateTime, tzone = "CET" )
+  
+  genDA             <- genDA[ DateTime > today( tzone = "CET" ) ]
+  
+  return( genDA )
+  
+}
+
+downloadGenDAWS  <- function( eic_code, period_start, period_end ) {
+  genDAWS <- en_generation_day_ahead_gen_forecast_ws( eic          = eic_code,
+                                                      period_start = period_start,
+                                                      period_end   = period_end ) %>% setDT()
+  
+  # genDAWS <- en_generation_day_ahead_gen_forecast_ws( eic          = "10Y1001A1001A83F",
+  #                                                     period_start = ymd( today(), tz = "CET" ),
+  #                                                     period_end   = ymd( today(), tz = "CET" ) + days( 3L ) ) %>% setDT()
+  
+  dict    <- en_generation_codes()
+  
+  genDAWS <- merge( x     = genDAWS,
+                    y     = dict[ , c( "codes", "meaning" ) ],
+                    by.x  = "MktPSRType",
+                    by.y  = "codes",
+                    all.x = TRUE )
+  genDAWS[ i = ,
+           j = MktPSRType := NULL ]
+  
+  genDAWS[ i = ,
+           j = quantity_Measure_Unit.name := NULL ]
+  
+  colnames( genDAWS ) <- c( "BiddingZone", "GenerationValue", "DateTime", "GenerationType" )
+  
+  genDAWS$DateTime    <- with_tz( genDAWS$DateTime, tzone = "CET" )
+  
+  genDAWS             <- genDAWS[ DateTime > today( tzone = "CET" ) ]
+  
+  return( genDAWS )
+  
+}
+
 ######## load downloader #########
 
 downloadLoadRT   <- function( eic_code, period_start, period_end ) {
@@ -101,182 +278,7 @@ downloadLoadWA   <- function( eic_code, period_start, period_end ) {
 }
 
 
-######## generation downloader #########
 
-downloadGenRT    <- function( eic_code, period_start, period_end ) {
-  # Call function from downloader script
-  genRT <- en_generation_agg_gen_per_type( eic          = eic_code,
-                                           period_start = period_start,
-                                           period_end   = period_end ) %>% setDT()
-  # Call function from here (for testing)
-  genRT <- en_generation_agg_gen_per_type( eic          = "10Y1001A1001A83F",
-                                           period_start = ymd( today(), tz = "CET" ) - days( 1L ),
-                                           period_end   = ymd( today(), tz = "CET" ) + days( 1L ) ) %>% setDT()
-  
-  # Load EIC code dictionary
-  dict  <- en_generation_codes()
-  
-  # Merge data table with code dictionary
-  genRT <- merge( x     = genRT,
-                  y     = dict[ , c( "codes", "meaning" ) ],
-                  by.x  = "MktPSRType",
-                  by.y  = "codes",
-                  all.x = TRUE )
-  
-  # Remove not needed columns
-  genRT[ i = ,
-         j = ":=" ( MktPSRType                 = NULL, 
-                    quantity_Measure_Unit.name = NULL ) ]
-  
-  # Renam columns
-  colnames( genRT ) <- c( "InBiddingZone", "GenerationValue", "DateTime",
-                          "OutBiddingZone", "GenerationType" )
-  
-  # Set time zone
-  genRT$DateTime    <- with_tz( genRT$DateTime, tzone = "CET" )
-  
-  # Remove lines where OutBiddingZone variable has values AND GenerationType is Solar or Wind
-  # This is necessary because these values are duplicates
-  genRT <- genRT[ !( !is.na( OutBiddingZone ) & 
-                       GenerationType %in% list( "Solar", "Wind Onshore" ) ), ]
-  
-  # Change sign of GenerationValue where OutBiddingZone is not empty
-  # This is necessary because these lines denote  pumped storage consumption values
-  # On plots they should be denoted as negative (as the plant is not producing but consuming electricity)
-  genRT[ !is.na( OutBiddingZone ), GenerationValue := -GenerationValue, ]
-  
-  # Rename variable values to correspond to production or consumption
-  genRT[ !is.na( OutBiddingZone ) & GenerationType == "Hydro Pumped Storage", GenerationType := "Hydro Pumped Storage In", ]
-  genRT[  is.na( OutBiddingZone ) & GenerationType == "Hydro Pumped Storage", GenerationType := "Hydro Pumped Storage Out", ]
-  
-  # Remove and rename col since all values are now in one column (both positive and negative)
-  genRT$OutBiddingZone <- NULL
-  
-  setnames( x   = genRT,
-            old = "InBiddingZone",
-            new = "BiddingZone" )
-  
-  # Create new date and time variables for grouping by later
-  genRT[ i = ,
-         j = ":=" ( Date  = as.Date( DateTime, tz = "CET" ),
-                    Year  = as.factor( year( DateTime ) ),
-                    Month = as.factor( month( DateTime, label = TRUE ) ),
-                    Day   = as.factor( day( DateTime) ),
-                    Hour  = hour( DateTime) ) ]
-  
-  # Flooring DateTime variable to aggregate later
-  genRT[ i = ,
-         j = DateTime := floor_date( DateTime, unit = "hours" ) ]
-  
-  # Do hourly aggregation (mean, not sum, because we're converting MW to MWh)
-  genRT <- genRT[ i       = ,
-                  j       = lapply( X   = .SD,
-                                    FUN = mean ),
-                  by      = c( "DateTime", "BiddingZone", "Date", "Year", "Month", "Day", "Hour", "GenerationType" ),
-                  .SDcols = "GenerationValue" ]
-  
-  # Create aggregate types for display in Generation page on the dashboard
-  genRT[ GenerationType %in% c( "Wind Offshore", "Wind Onshore" ), 
-         AggregateType := "Wind" ]
-  
-  genRT[ GenerationType %in% c( "Solar" ), 
-         AggregateType := "Solar" ]
-  
-  genRT[ GenerationType %in% c( "Biomass", "Geothermal", "Hydro Pumped Storage Out", 
-                                "Hydro Run-of-river and poundage", "Hydro Water Reservoir", 
-                                "Marine", "Other renewable", "Waste" ), 
-         AggregateType := "Other renewables" ]
-  
-  genRT[ GenerationType %in% c( "Fossil Brown coal/Lignite", "Fossil Coal-derived gas", 
-                                "Fossil Gas", "Fossil Hard coal", "Fossil Oil", 
-                                "Fossil Oil shale", "Fossil Peat" ), 
-         AggregateType := "Fossil" ]
-  
-  genRT[ GenerationType %in% c( "Nuclear" ), 
-         AggregateType := "Nuclear" ]
-  
-  genRT[ GenerationType %in% c( "Other" ), 
-         AggregateType := "Other" ]
-  
-  # Calculate standard deviation of gfeneration values
-  # This is necessary because I will rank series on the plot by their standard deviation
-  dt <- genRT[ i  = , 
-               j  = .( stdev = sd( GenerationValue ) ), 
-               by = "GenerationType" ]
-  
-  dt <- dt[ i = ,
-            j = GenerationType := reorder( GenerationType, -stdev ) ]
-  
-  # Assign a factor level to each Generation type ranked by std dev
-  genRT$GenerationType <- factor( x       = genRT$GenerationType,
-                                  levels  = rev(levels( dt$GenerationType ) ) )
-
-  genRT <- genRT %>% tidyr::fill( BiddingZone, .direction = "down" )
-  
-  # Round values
-  genRT$GenerationValue <- round( genRT$GenerationValue, digits = 0L )
-
-  # Remove not needed columns
-  genRT[ i = ,
-          j = ":=" ( Date  = NULL, 
-                     Year  = NULL,
-                     Month = NULL,
-                     Day   = NULL,
-                     Hour  = NULL ) ]
-  
-  return( genRT )
-}
-
-downloadGenDA    <- function( eic_code, period_start, period_end ) {
-  genDA <- en_generation_day_ahead_agg_gen( eic          = eic_code,
-                                            period_start = period_start,
-                                            period_end   = period_end ) %>% setDT()
-  
-  # genDA <- en_generation_day_ahead_agg_gen( eic          = "10Y1001A1001A83F",
-  #                                           period_start = ymd( today(), tz = "CET" ),
-  #                                           period_end   = ymd( today(), tz = "CET" ) + days( 2L ) ) %>% setDT()
-  
-  colnames( genDA ) <- c( "BiddingZone", "Unit", "GenerationValue", "DateTime" )
-  
-  genDA$DateTime    <- with_tz( genDA$DateTime, tzone = "CET" )
-  
-  genDA             <- genDA[ DateTime > today( tzone = "CET" ) ]
-  
-  return( genDA )
-  
-}
-
-downloadGenDAWS  <- function( eic_code, period_start, period_end ) {
-  genDAWS <- en_generation_day_ahead_gen_forecast_ws( eic          = eic_code,
-                                                      period_start = period_start,
-                                                      period_end   = period_end ) %>% setDT()
-  
-  # genDAWS <- en_generation_day_ahead_gen_forecast_ws( eic          = "10Y1001A1001A83F",
-  #                                                     period_start = ymd( today(), tz = "CET" ),
-  #                                                     period_end   = ymd( today(), tz = "CET" ) + days( 3L ) ) %>% setDT()
-  
-  dict    <- en_generation_codes()
-  
-  genDAWS <- merge( x     = genDAWS,
-                    y     = dict[ , c( "codes", "meaning" ) ],
-                    by.x  = "MktPSRType",
-                    by.y  = "codes",
-                    all.x = TRUE )
-  genDAWS[ i = ,
-           j = MktPSRType := NULL ]
-  
-  genDAWS[ i = ,
-           j = quantity_Measure_Unit.name := NULL ]
-  
-  colnames( genDAWS ) <- c( "BiddingZone", "GenerationValue", "DateTime", "GenerationType" )
-  
-  genDAWS$DateTime    <- with_tz( genDAWS$DateTime, tzone = "CET" )
-  
-  genDAWS             <- genDAWS[ DateTime > today( tzone = "CET" ) ]
-  
-  return( genDAWS )
-  
-}
 
 ######## ggplot theme #########
 theme_map <- function(...) {
