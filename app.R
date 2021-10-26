@@ -3,8 +3,6 @@
 
 library( shiny        )
 library( shinyWidgets )
-# library( argonR       )
-# library( argonDash    )
 library( blueDash     )
 library( blueR        )
 library( fst          )
@@ -37,14 +35,14 @@ net        <- readRDS( file = "data_static/net.rds" )
 # Load dashboard elements and pages
 lapply( X   = list.files( path = "elements", full.names = TRUE ),
         FUN = source )
-lapply( X   = list.files( path = "pages", full.names = TRUE ),
+lapply( X   = list.files( path = "pages",    full.names = TRUE ),
         FUN = source )
 
 # Set design elements
 e_common( font_family = "Barlow" )
-# pal1 <- c( "#36648b", "#648b36", "#8b5d36" )
-# pal1 <- c("#36648b", "#94346E", "#5F4690","#1D6996","#38A6A5","#0F8554","#73AF48","#EDAD08","#E17C05","#CC503E","#6F4070","#994E95","#36648b")
-pal1 <- head(carto_pal( 5L, "Pastel"), -1L )
+theme_palette <- "#36648b"
+carto_palette <- head( x = carto_pal( 12L, "Pastel" ), n = -1L )
+
 # App
 shiny::shinyApp(
   
@@ -59,7 +57,8 @@ shiny::shinyApp(
       use_font("barlow", "www/css/barlow.css", css = "font-family: 'Barlow', sans-serif;"),
       setSliderColor( color = "#36648b", sliderId = 1L ),
       chooseSliderSkin( skin = "Flat" ),
-      blueTabItems( generation_page,
+      blueTabItems( welcome_page,
+                    generation_page,
                     demand_page,
                     exim_page,
                     map_page,
@@ -88,10 +87,10 @@ shiny::shinyApp(
                       as.data.table = TRUE ), 
               envir = .GlobalEnv )
     
-    setnames( x = Germany, old = "TotalLoad", new = "Total Demand")
-    setnames( x = Germany, old = "ResidualLoad", new = "Residual Demand")
-    setnames( x = France, old = "TotalLoad", new = "Total Demand")
-    setnames( x = France, old = "ResidualLoad", new = "Residual Demand")
+    setnames( x = Germany, old = "TotalLoad",    new = "Total Demand" )
+    setnames( x = Germany, old = "ResidualLoad", new = "Residual Demand" )
+    setnames( x = France,  old = "TotalLoad",    new = "Total Demand" )
+    setnames( x = France,  old = "ResidualLoad", new = "Residual Demand" )
     
     # Get time of last data refresh:
     # List files on Google Drive, get first row (any row would work), get the 
@@ -162,9 +161,9 @@ shiny::shinyApp(
         e_legend( show = FALSE ) %>% 
         e_title( text    = "Day-ahead generation forecast", 
                  subtext = "Total generation, MWh" ) %>% 
-        e_color( pal1 ) %>% 
+        e_color( carto_palette ) %>% 
         e_datazoom( type  = "inside" ) %>% 
-        e_show_loading()} )
+        e_show_loading() } )
     
     output$legend_selected <- renderText( { 
       input$GenDAGerPlot_mouseover_data
@@ -191,7 +190,7 @@ shiny::shinyApp(
         e_legend( right = "10%" ) %>% 
         e_title( text    = "Day-ahead generation forecast", 
                  subtext = "Wind and solar generation, MWh" ) %>% 
-        e_color( pal1 ) %>% 
+        e_color( carto_palette[ c( 2, 1, 6 ) ] ) %>% 
         e_datazoom( type  = "inside" )%>% 
         e_show_loading() } )
     
@@ -237,7 +236,7 @@ shiny::shinyApp(
         e_tooltip( trigger = "axis" ) %>% 
         e_title( text    = "Real-time demand", 
                  subtext = "Total demand, MWh" ) %>% 
-        e_color(pal1) %>% 
+        e_color( c( theme_palette[ 1 ], carto_palette[ 7 ] ) ) %>% 
         e_datazoom( type  = "slider",
                     start = 80L,
                     end   = 100L )%>% 
@@ -263,8 +262,8 @@ shiny::shinyApp(
         e_legend( show = FALSE ) %>% 
         e_title( text    = "Day-ahead demand forecast", 
                  subtext = "Total demand, MW" ) %>% 
-        e_color(pal1) %>% 
-        e_datazoom( type  = "inside" )%>% 
+        e_color( theme_palette[ 1 ] ) %>% 
+        e_datazoom( type  = "inside" ) %>%
         e_show_loading() } )
     
     
@@ -290,7 +289,7 @@ shiny::shinyApp(
         e_legend( right = "10%" ) %>% 
         e_title( text    = "Week-ahead demand forecast", 
                  subtext = "Total demand, MW" ) %>% 
-        e_color(pal1) %>% 
+        e_color( c( theme_palette[ 1 ], carto_palette[ 7 ] ) ) %>% 
         e_datazoom( type  = "inside" )%>% 
         e_show_loading() } )
     
@@ -366,7 +365,7 @@ shiny::shinyApp(
                   target    = InAreaName,
                   value     = Value,
                   lineStyle = list( color = "gradient" ) ) %>% 
-        e_color( pal1 ) %>% 
+        e_color( carto_palette ) %>% 
         e_tooltip( trigger = "item" ) %>% 
         e_show_loading() } )
     
@@ -389,7 +388,7 @@ shiny::shinyApp(
                   target    = InAreaName,
                   value     = Value,
                   lineStyle = list( color = "gradient" ) ) %>% 
-        e_color( pal1 ) %>% 
+        e_color( carto_palette ) %>% 
         e_tooltip( trigger = "item" ) %>%
         e_show_loading() } )
     
@@ -433,7 +432,7 @@ shiny::shinyApp(
         e_legend( orient   = "vertical",
                   right    = "0%",
                   top      = "center" ) %>% 
-        e_color( pal1 )
+        e_color( carto_palette )
       } )
     
 

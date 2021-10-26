@@ -8,15 +8,16 @@ dashSidebar <- blueDashSidebar(
   id         = "my_sidebar",
   brand_url  = NULL,
   brand_logo = "https://i.ibb.co/4Y3Kt0n/trackerlogo3.png",
+  # brand_logo = "https://i.ibb.co/gVrXZ1L/trackelogobeta.png",
   
 
   
   blueSidebarMenu(
     blueSidebarHeader( title = "Main Menu" ),
     
-    # blueSidebarItem( tabName = "Welcome",
-    #                   icon    = icon( name = "door-open" ),
-    #                   "Welcome!" ),
+    blueSidebarItem( tabName = "Welcome",
+                      icon    = icon( name = "door-open" ),
+                      "Welcome" ),
     
     blueSidebarItem( tabName = "Generation",
                       icon    = icon( name = "plus-square" ),
@@ -32,7 +33,7 @@ dashSidebar <- blueDashSidebar(
     
     blueSidebarItem( tabName = "Map",
                       icon    = icon( name = "map" ),
-                      "Map" ),
+                      "Geospatial" ),
     
     blueSidebarItem( tabName = "Data",
                       icon    = icon( name = "database" ),

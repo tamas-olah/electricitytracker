@@ -1,48 +1,53 @@
 ######## load downloader #########
 
 downloadLoadRT   <- function( eic_code, period_start, period_end ) {
+  # Call function from downloader script
   loadRT <- en_load_actual_total_load( eic          = eic_code,
                                        period_start = period_start,
                                        period_end   = period_end ) %>% setDT()
   
+  # Call function from here (for testing)
   # loadRT <- en_load_actual_total_load( eic          = "10Y1001A1001A83F",
   #                                      period_start = ymd( today(), tz = "CET" ) - days( 369L ),
   #                                      period_end   = ymd( today(), tz = "CET" ) + days( 1L ) ) %>% setDT()
   
-  loadRT[ i = ,
-          j = unit := NULL ]
-  
+  # Remove not needed column and rename others
+  loadRT$unit <- NULL
   colnames( loadRT ) <- c( "DateTime", "TotalLoad", "BiddingZone" )
   
+  # Set time zone
   loadRT$DateTime    <- with_tz( loadRT$DateTime, tzone = "CET" )
   
+  # Create new date and time variables for grouping by later
   loadRT[ i = ,
-          j = Date := as.Date( DateTime ) ]
+          j = ":=" ( Date  = as.Date( DateTime, tz = "CET" ),
+                     Year  = as.factor( year( DateTime ) ),
+                     Month = as.factor( month( DateTime, label = TRUE ) ),
+                     Day   = as.factor( day( DateTime) ),
+                     Hour  = hour( DateTime) ) ]
   
-  loadRT[ i = ,
-          j = Year := as.factor( year( DateTime ) ) ]
-  
-  loadRT[ i = ,
-          j = Month := as.factor( lubridate::month( DateTime, label = TRUE ) ) ]
-  
-  loadRT[ i = ,
-          j = Hour := hour( DateTime ) ]
-
+  # Flooring DateTime variable to aggregate later
   loadRT[ i = ,
           j = DateTime := floor_date( DateTime, unit = "hours" ) ]
   
-  # loadRT[ i = ,
-  #         j = LoadType := "TotalLoad" ]
-  
+  # Do hourly aggregation
   loadRT <- loadRT[ i       = ,
                     j       = lapply( X   = .SD,
                                       FUN = mean ),
-                    by      = c( "DateTime", "BiddingZone", "Date", "Year", "Month", "Hour"
-                                 # , "LoadType" 
-                                 ),
+                    by      = c( "DateTime", "BiddingZone", "Date", 
+                                 "Year", "Month", "Day", "Hour" ),
                     .SDcols = "TotalLoad" ]
   
+  # Round results
   loadRT$TotalLoad <- round( loadRT$TotalLoad, digits = 0L )
+  
+  # Remove not needed columns
+  loadRT[ i = ,
+          j = ":=" ( Date  = NULL, 
+                     Year  = NULL,
+                     Month = NULL,
+                     Day   = NULL,
+                     Hour  = NULL ) ]
   
   return( loadRT )
 }
@@ -99,67 +104,78 @@ downloadLoadWA   <- function( eic_code, period_start, period_end ) {
 ######## generation downloader #########
 
 downloadGenRT    <- function( eic_code, period_start, period_end ) {
+  # Call function from downloader script
   genRT <- en_generation_agg_gen_per_type( eic          = eic_code,
                                            period_start = period_start,
                                            period_end   = period_end ) %>% setDT()
+  # Call function from here (for testing)
+  genRT <- en_generation_agg_gen_per_type( eic          = "10Y1001A1001A83F",
+                                           period_start = ymd( today(), tz = "CET" ) - days( 1L ),
+                                           period_end   = ymd( today(), tz = "CET" ) + days( 1L ) ) %>% setDT()
   
-  # genRT <- en_generation_agg_gen_per_type( eic          = "10Y1001A1001A83F",
-  #                                          period_start = ymd( today(), tz = "CET" ) - days( 1L ),
-  #                                          period_end   = ymd( today(), tz = "CET" ) + days( 1L ) ) %>% setDT()
-  
+  # Load EIC code dictionary
   dict  <- en_generation_codes()
   
+  # Merge data table with code dictionary
   genRT <- merge( x     = genRT,
                   y     = dict[ , c( "codes", "meaning" ) ],
                   by.x  = "MktPSRType",
                   by.y  = "codes",
                   all.x = TRUE )
   
+  # Remove not needed columns
   genRT[ i = ,
-         j = MktPSRType := NULL ]
+         j = ":=" ( MktPSRType                 = NULL, 
+                    quantity_Measure_Unit.name = NULL ) ]
   
-  genRT[ i = ,
-         j = quantity_Measure_Unit.name := NULL ]
-  
+  # Renam columns
   colnames( genRT ) <- c( "InBiddingZone", "GenerationValue", "DateTime",
                           "OutBiddingZone", "GenerationType" )
   
+  # Set time zone
   genRT$DateTime    <- with_tz( genRT$DateTime, tzone = "CET" )
   
-  genRT <- genRT[ !( !is.na( OutBiddingZone ) & GenerationType %in% list( "Solar", "Wind Onshore" ) ), ]
+  # Remove lines where OutBiddingZone variable has values AND GenerationType is Solar or Wind
+  # This is necessary because these values are duplicates
+  genRT <- genRT[ !( !is.na( OutBiddingZone ) & 
+                       GenerationType %in% list( "Solar", "Wind Onshore" ) ), ]
   
+  # Change sign of GenerationValue where OutBiddingZone is not empty
+  # This is necessary because these lines denote  pumped storage consumption values
+  # On plots they should be denoted as negative (as the plant is not producing but consuming electricity)
   genRT[ !is.na( OutBiddingZone ), GenerationValue := -GenerationValue, ]
+  
+  # Rename variable values to correspond to production or consumption
   genRT[ !is.na( OutBiddingZone ) & GenerationType == "Hydro Pumped Storage", GenerationType := "Hydro Pumped Storage In", ]
   genRT[  is.na( OutBiddingZone ) & GenerationType == "Hydro Pumped Storage", GenerationType := "Hydro Pumped Storage Out", ]
   
-  genRT[ i = ,
-         j = OutBiddingZone := NULL ]
+  # Remove and rename col since all values are now in one column (both positive and negative)
+  genRT$OutBiddingZone <- NULL
   
   setnames( x   = genRT,
             old = "InBiddingZone",
             new = "BiddingZone" )
   
+  # Create new date and time variables for grouping by later
   genRT[ i = ,
-         j = Date := as.Date( DateTime ) ]
+         j = ":=" ( Date  = as.Date( DateTime, tz = "CET" ),
+                    Year  = as.factor( year( DateTime ) ),
+                    Month = as.factor( month( DateTime, label = TRUE ) ),
+                    Day   = as.factor( day( DateTime) ),
+                    Hour  = hour( DateTime) ) ]
   
-  genRT[ i = ,
-         j = Year := as.factor( year( DateTime ) ) ]
-  
-  genRT[ i = ,
-         j = Month := as.factor( lubridate::month( DateTime, label = TRUE ) ) ]
-  
-  genRT[ i = ,
-         j = Hour := hour( DateTime ) ]
-  
+  # Flooring DateTime variable to aggregate later
   genRT[ i = ,
          j = DateTime := floor_date( DateTime, unit = "hours" ) ]
   
+  # Do hourly aggregation (mean, not sum, because we're converting MW to MWh)
   genRT <- genRT[ i       = ,
                   j       = lapply( X   = .SD,
                                     FUN = mean ),
-                  by      = c( "DateTime", "BiddingZone", "Date", "Year", "Month", "Hour", "GenerationType" ),
+                  by      = c( "DateTime", "BiddingZone", "Date", "Year", "Month", "Day", "Hour", "GenerationType" ),
                   .SDcols = "GenerationValue" ]
   
+  # Create aggregate types for display in Generation page on the dashboard
   genRT[ GenerationType %in% c( "Wind Offshore", "Wind Onshore" ), 
          AggregateType := "Wind" ]
   
@@ -181,20 +197,33 @@ downloadGenRT    <- function( eic_code, period_start, period_end ) {
   
   genRT[ GenerationType %in% c( "Other" ), 
          AggregateType := "Other" ]
-
+  
+  # Calculate standard deviation of gfeneration values
+  # This is necessary because I will rank series on the plot by their standard deviation
   dt <- genRT[ i  = , 
                j  = .( stdev = sd( GenerationValue ) ), 
                by = "GenerationType" ]
   
-  dt <- dt[ , GenerationType := reorder( GenerationType, -stdev ) ]
+  dt <- dt[ i = ,
+            j = GenerationType := reorder( GenerationType, -stdev ) ]
   
+  # Assign a factor level to each Generation type ranked by std dev
   genRT$GenerationType <- factor( x       = genRT$GenerationType,
                                   levels  = rev(levels( dt$GenerationType ) ) )
 
-  genRT <- genRT %>% fill( BiddingZone, .direction = "down" )
+  genRT <- genRT %>% tidyr::fill( BiddingZone, .direction = "down" )
   
+  # Round values
   genRT$GenerationValue <- round( genRT$GenerationValue, digits = 0L )
 
+  # Remove not needed columns
+  genRT[ i = ,
+          j = ":=" ( Date  = NULL, 
+                     Year  = NULL,
+                     Month = NULL,
+                     Day   = NULL,
+                     Hour  = NULL ) ]
+  
   return( genRT )
 }
 
